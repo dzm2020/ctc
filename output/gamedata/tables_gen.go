@@ -85,63 +85,54 @@ func (r *WallpaperRow) GetTime3() int {
 	return r.time3
 }
 
-
-
 type WallpaperTable struct {
 	dict map[int64]*WallpaperRow
 	list []*WallpaperRow
 }
 
-// LoadWallpaperJSON 从 path 加载 Wallpaper.json（map[主键]*WallpaperRow）。
-func (r *WallpaperTable)load(path string) error{
-	b, err := os.ReadFile(path)
+func (r *WallpaperTable) load(path string) error {
+	data, err := os.ReadFile(path)
 	if err != nil {
-		return  err
+		return err
 	}
-
-	if err := json.Unmarshal(b, &r.list); err != nil {
-		return  err
+	if err := json.Unmarshal(data, &r.list); err != nil {
+		return err
 	}
 	r.dict = make(map[int64]*WallpaperRow)
 	for _, row := range r.list {
 		r.dict[row.GetID()] = row
 	}
-	return  nil
+	return nil
 }
 
-
-func (r *WallpaperTable)Get(id int64) *WallpaperRow{
+func (r *WallpaperTable) Get(id int64) *WallpaperRow {
 	row, _ := r.dict[id]
 	return row
 }
 
-func (r *WallpaperTable)Index(idx int) *WallpaperRow{
-	if idx >= len(r.list) {
+func (r *WallpaperTable) Index(idx int) *WallpaperRow {
+	if idx < 0 || idx >= len(r.list) {
 		return nil
 	}
 	return r.list[idx]
 }
 
-
-func (r *WallpaperTable)Range(f func(*WallpaperRow) bool) {
+func (r *WallpaperTable) Range(f func(*WallpaperRow) bool) {
 	for _, row := range r.dict {
 		if !f(row) {
 			return
 		}
 	}
-	return
 }
 
-
-func (r *WallpaperTable)SeqRange(f func(*WallpaperRow) bool) {
+func (r *WallpaperTable) SeqRange(f func(*WallpaperRow) bool) {
 	for _, row := range r.list {
 		if !f(row) {
 			return
 		}
 	}
-	return
 }
 
-func (r *WallpaperTable)Len() int{
+func (r *WallpaperTable) Len() int {
 	return len(r.dict)
 }

@@ -84,7 +84,7 @@ func WritePackage(dir, pkg string, schema *excelconv.Schema, target excelconv.Ex
 		for _, tname := range tkeys {
 			visible := visibleTableFields(schema.Tables[tname], target)
 			writeTableRowStruct(b, tname, visible, schema)
-			writeLoadTableJSON(b, tname)
+			writeTableContainer(b, tname, schema)
 		}
 		files = append(files, fileOut{"tables_gen.go", b.String()})
 	}
@@ -266,21 +266,61 @@ func writeTableRowStruct(b *strings.Builder, tname string, visible []excelconv.F
 	}
 }
 
-func writeLoadTableJSON(b *strings.Builder, tname string) {
+func writeTableContainer(b *strings.Builder, tname string, schema *excelconv.Schema) {
+	idGo := tableRowPrimaryKeyGoType(schema, tname)
+	fmt.Fprintf(b, "\n\ntype %sTable struct {\n", tname)
+	fmt.Fprintf(b, "\tdict map[%s]*%sRow\n", idGo, tname)
+	fmt.Fprintf(b, "\tlist []*%sRow\n", tname)
+	fmt.Fprintf(b, "}\n")
+
 	fmt.Fprintf(b, `
-// Load%sJSON 从 path 加载 %s.json（map[主键]*%sRow）。
-func Load%sJSON(path string) (map[string]*%sRow, error) {
-	b, err := os.ReadFile(path)
+func (r *%sTable) load(path string) error {
+	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	var m map[string]*%sRow
-	if err := json.Unmarshal(b, &m); err != nil {
-		return nil, err
+	if err := json.Unmarshal(data, &r.list); err != nil {
+		return err
 	}
-	return m, nil
+	r.dict = make(map[%s]*%sRow)
+	for _, row := range r.list {
+		r.dict[row.GetID()] = row
+	}
+	return nil
 }
-`, tname, tname, tname, tname, tname, tname)
+
+func (r *%sTable) Get(id %s) *%sRow {
+	row, _ := r.dict[id]
+	return row
+}
+
+func (r *%sTable) Index(idx int) *%sRow {
+	if idx < 0 || idx >= len(r.list) {
+		return nil
+	}
+	return r.list[idx]
+}
+
+func (r *%sTable) Range(f func(*%sRow) bool) {
+	for _, row := range r.dict {
+		if !f(row) {
+			return
+		}
+	}
+}
+
+func (r *%sTable) SeqRange(f func(*%sRow) bool) {
+	for _, row := range r.list {
+		if !f(row) {
+			return
+		}
+	}
+}
+
+func (r *%sTable) Len() int {
+	return len(r.dict)
+}
+`, tname, idGo, tname, tname, idGo, tname, tname, tname, tname, tname, tname, tname, tname)
 }
 
 // GenerateBundle 写出 GameData 与 LoadGameData（jsonDir 应与 excel2json -out 一致）。
@@ -308,20 +348,34 @@ import (
 // GameData 汇总各表数据；请使用与 excel2json -out 相同的目录调用 LoadGameData。
 type GameData struct {
 `, pkg)
-	for _, t := range tnames {
-		fmt.Fprintf(&buf, "\t%s map[string]*%sRow\n", t, t)
+	if len(tnames) == 1 {
+		fmt.Fprintf(&buf, "\t%sTable\n", tnames[0])
+	} else {
+		for _, t := range tnames {
+			fname := gameDataFieldName(t)
+			fmt.Fprintf(&buf, "\t%s %sTable\n", fname, t)
+		}
 	}
 	fmt.Fprintf(&buf, `}
 
-// LoadGameData 在 jsonDir 下按 «表名».json 加载全部表。
+// LoadGameData 在 jsonDir 下按 «表名».json 加载全部表（JSON 为行对象数组）。
 func LoadGameData(jsonDir string) (*GameData, error) {
 	d := &GameData{}
 `)
-	for _, t := range tnames {
+	if len(tnames) == 1 {
+		t := tnames[0]
 		j := t + ".json"
-		fmt.Fprintf(&buf, "\tm%s, err := Load%sJSON(filepath.Join(jsonDir, %q))\n", t, t, j)
-		fmt.Fprintf(&buf, "\tif err != nil { return nil, fmt.Errorf(\"load %s: %%w\", err) }\n", j)
-		fmt.Fprintf(&buf, "\td.%s = m%s\n", t, t)
+		fmt.Fprintf(&buf, "\tif err := d.%sTable.load(filepath.Join(jsonDir, %q)); err != nil {\n", t, j)
+		fmt.Fprintf(&buf, "\t\treturn nil, fmt.Errorf(\"load %s: %%w\", err)\n", j)
+		fmt.Fprintf(&buf, "\t}\n")
+	} else {
+		for _, t := range tnames {
+			fname := gameDataFieldName(t)
+			j := t + ".json"
+			fmt.Fprintf(&buf, "\tif err := d.%s.load(filepath.Join(jsonDir, %q)); err != nil {\n", fname, j)
+			fmt.Fprintf(&buf, "\t\treturn nil, fmt.Errorf(\"load %s: %%w\", err)\n", j)
+			fmt.Fprintf(&buf, "\t}\n")
+		}
 	}
 	fmt.Fprintf(&buf, "\treturn d, nil\n}\n")
 

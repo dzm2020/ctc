@@ -12,13 +12,11 @@ type GameData struct {
 	WallpaperTable
 }
 
-// LoadGameData 在 jsonDir 下按 «表名».json 加载全部表。
+// LoadGameData 在 jsonDir 下按 «表名».json 加载全部表（JSON 为行对象数组）。
 func LoadGameData(jsonDir string) (*GameData, error) {
 	d := &GameData{}
-
-	if err:= d.WallpaperTable.load(filepath.Join(jsonDir, "Wallpaper.json")) ;err != nil {
+	if err := d.WallpaperTable.load(filepath.Join(jsonDir, "Wallpaper.json")); err != nil {
 		return nil, fmt.Errorf("load Wallpaper.json: %w", err)
 	}
-
 	return d, nil
 }

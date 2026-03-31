@@ -61,6 +61,11 @@ func structJSONAuxTypeName(structName string) string {
 	return "structJSONAux_" + structName
 }
 
+// gameDataFieldName GameData 中表容器字段名（导出）。
+func gameDataFieldName(tableName string) string {
+	return exportedGoIdent(tableName)
+}
+
 func constName(enum, member string) string {
 	runes := []rune(strings.TrimSpace(member))
 	if len(runes) > 0 && unicode.IsLower(runes[0]) {

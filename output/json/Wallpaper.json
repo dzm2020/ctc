@@ -1,5 +1,5 @@
-{
-  "1": {
+[
+  {
     "Cover": "UI\\BGs\\Wallpaper_001.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -10,7 +10,7 @@
     "Video3": "",
     "id": 1
   },
-  "2": {
+  {
     "Cover": "UI\\BGs\\LoginBG.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -21,7 +21,7 @@
     "Video3": "",
     "id": 2
   },
-  "201": {
+  {
     "Cover": "UI\\BGs\\201_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -32,7 +32,7 @@
     "Video3": "",
     "id": 201
   },
-  "202": {
+  {
     "Cover": "UI\\BGs\\202_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -43,7 +43,7 @@
     "Video3": "",
     "id": 202
   },
-  "203": {
+  {
     "Cover": "UI\\BGs\\203_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -54,7 +54,7 @@
     "Video3": "",
     "id": 203
   },
-  "204": {
+  {
     "Cover": "UI\\BGs\\204_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -65,7 +65,7 @@
     "Video3": "",
     "id": 204
   },
-  "205": {
+  {
     "Cover": "UI\\BGs\\205_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -76,7 +76,7 @@
     "Video3": "",
     "id": 205
   },
-  "206": {
+  {
     "Cover": "UI\\BGs\\206_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -87,7 +87,7 @@
     "Video3": "",
     "id": 206
   },
-  "207": {
+  {
     "Cover": "UI\\BGs\\207_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -98,7 +98,7 @@
     "Video3": "",
     "id": 207
   },
-  "208": {
+  {
     "Cover": "UI\\BGs\\208_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -109,7 +109,7 @@
     "Video3": "",
     "id": 208
   },
-  "209": {
+  {
     "Cover": "UI\\BGs\\209_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -120,7 +120,7 @@
     "Video3": "",
     "id": 209
   },
-  "210": {
+  {
     "Cover": "UI\\BGs\\210_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -131,7 +131,7 @@
     "Video3": "",
     "id": 210
   },
-  "211": {
+  {
     "Cover": "UI\\BGs\\211_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -142,7 +142,7 @@
     "Video3": "",
     "id": 211
   },
-  "212": {
+  {
     "Cover": "UI\\BGs\\212_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -153,7 +153,7 @@
     "Video3": "",
     "id": 212
   },
-  "301": {
+  {
     "Cover": "UI\\BGs\\301_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -164,7 +164,7 @@
     "Video3": "",
     "id": 301
   },
-  "302": {
+  {
     "Cover": "UI\\BGs\\302_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -175,7 +175,7 @@
     "Video3": "",
     "id": 302
   },
-  "303": {
+  {
     "Cover": "UI\\BGs\\303_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -186,7 +186,7 @@
     "Video3": "",
     "id": 303
   },
-  "304": {
+  {
     "Cover": "UI\\BGs\\304_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -197,7 +197,7 @@
     "Video3": "",
     "id": 304
   },
-  "305": {
+  {
     "Cover": "UI\\BGs\\305_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -208,7 +208,7 @@
     "Video3": "",
     "id": 305
   },
-  "306": {
+  {
     "Cover": "UI\\BGs\\306_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -219,7 +219,7 @@
     "Video3": "",
     "id": 306
   },
-  "401": {
+  {
     "Cover": "UI\\BGs\\401_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -230,7 +230,7 @@
     "Video3": "",
     "id": 401
   },
-  "402": {
+  {
     "Cover": "UI\\BGs\\402_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -241,7 +241,7 @@
     "Video3": "",
     "id": 402
   },
-  "403": {
+  {
     "Cover": "UI\\BGs\\403_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -252,7 +252,7 @@
     "Video3": "",
     "id": 403
   },
-  "404": {
+  {
     "Cover": "UI\\BGs\\404_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -263,7 +263,7 @@
     "Video3": "",
     "id": 404
   },
-  "405": {
+  {
     "Cover": "UI\\BGs\\405_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -274,7 +274,7 @@
     "Video3": "",
     "id": 405
   },
-  "406": {
+  {
     "Cover": "UI\\BGs\\406_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -285,7 +285,7 @@
     "Video3": "",
     "id": 406
   },
-  "407": {
+  {
     "Cover": "UI\\BGs\\407_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -296,7 +296,7 @@
     "Video3": "",
     "id": 407
   },
-  "408": {
+  {
     "Cover": "UI\\BGs\\408_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -307,7 +307,7 @@
     "Video3": "",
     "id": 408
   },
-  "409": {
+  {
     "Cover": "UI\\BGs\\409_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -318,7 +318,7 @@
     "Video3": "",
     "id": 409
   },
-  "410": {
+  {
     "Cover": "UI\\BGs\\410_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -329,7 +329,7 @@
     "Video3": "",
     "id": 410
   },
-  "411": {
+  {
     "Cover": "UI\\BGs\\411_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -340,7 +340,7 @@
     "Video3": "",
     "id": 411
   },
-  "412": {
+  {
     "Cover": "UI\\BGs\\412_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -351,7 +351,7 @@
     "Video3": "",
     "id": 412
   },
-  "413": {
+  {
     "Cover": "UI\\BGs\\413_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -362,7 +362,7 @@
     "Video3": "",
     "id": 413
   },
-  "414": {
+  {
     "Cover": "UI\\BGs\\414_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -373,7 +373,7 @@
     "Video3": "",
     "id": 414
   },
-  "415": {
+  {
     "Cover": "UI\\BGs\\415_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -384,7 +384,7 @@
     "Video3": "",
     "id": 415
   },
-  "416": {
+  {
     "Cover": "UI\\BGs\\416_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -395,7 +395,7 @@
     "Video3": "",
     "id": 416
   },
-  "417": {
+  {
     "Cover": "UI\\BGs\\417_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -406,7 +406,7 @@
     "Video3": "",
     "id": 417
   },
-  "418": {
+  {
     "Cover": "UI\\BGs\\418_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -417,7 +417,7 @@
     "Video3": "",
     "id": 418
   },
-  "419": {
+  {
     "Cover": "UI\\BGs\\419_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -428,7 +428,7 @@
     "Video3": "",
     "id": 419
   },
-  "420": {
+  {
     "Cover": "UI\\BGs\\420_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -439,7 +439,7 @@
     "Video3": "",
     "id": 420
   },
-  "421": {
+  {
     "Cover": "UI\\BGs\\421_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -450,7 +450,7 @@
     "Video3": "",
     "id": 421
   },
-  "422": {
+  {
     "Cover": "UI\\BGs\\422_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -461,7 +461,7 @@
     "Video3": "",
     "id": 422
   },
-  "423": {
+  {
     "Cover": "UI\\BGs\\423_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -472,7 +472,7 @@
     "Video3": "",
     "id": 423
   },
-  "424": {
+  {
     "Cover": "UI\\BGs\\424_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -483,7 +483,7 @@
     "Video3": "",
     "id": 424
   },
-  "425": {
+  {
     "Cover": "UI\\BGs\\425_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -494,7 +494,7 @@
     "Video3": "",
     "id": 425
   },
-  "426": {
+  {
     "Cover": "UI\\BGs\\426_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -505,7 +505,7 @@
     "Video3": "",
     "id": 426
   },
-  "427": {
+  {
     "Cover": "UI\\BGs\\427_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -516,7 +516,7 @@
     "Video3": "",
     "id": 427
   },
-  "428": {
+  {
     "Cover": "UI\\BGs\\428_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -527,7 +527,7 @@
     "Video3": "",
     "id": 428
   },
-  "429": {
+  {
     "Cover": "UI\\BGs\\429_show.jpeg",
     "Time1": 0,
     "Time2": 0,
@@ -538,4 +538,4 @@
     "Video3": "",
     "id": 429
   }
-}
+]

@@ -85,7 +85,8 @@ func main() {
 
 	for _, name := range excelconv.StableTableNames(mergedTables) {
 		rows := mergedTables[name]
-		if err := writeJSON(filepath.Join(jsonOut, name+".json"), rows, indent); err != nil {
+		arr := excelconv.TableRowsToOrderedSlice(rows)
+		if err := writeJSON(filepath.Join(jsonOut, name+".json"), arr, indent); err != nil {
 			fmt.Fprintf(os.Stderr, "写入 %s.json: %v\n", name, err)
 			os.Exit(1)
 		}
