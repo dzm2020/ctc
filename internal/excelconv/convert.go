@@ -1,0 +1,213 @@
+package excelconv
+
+import (
+	"encoding/json"
+	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/xuri/excelize/v2"
+)
+
+// ConvertWorkbook 将工作簿中除 @Type 外、且在 Schema 中有表定义的 sheet 转为 map[表名][主键]行数据。
+func ConvertWorkbook(f *excelize.File, schema *Schema, target ExportTarget) (map[string]map[string]map[string]interface{}, error) {
+	out := make(map[string]map[string]map[string]interface{})
+	for _, name := range f.GetSheetList() {
+		if name == typeSheetName {
+			continue
+		}
+		if _, ok := schema.Tables[name]; !ok {
+			continue
+		}
+		m, err := convertDataSheet(f, name, schema, target)
+		if err != nil {
+			return nil, fmt.Errorf("sheet %q: %w", name, err)
+		}
+		out[name] = m
+	}
+	return out, nil
+}
+
+func convertDataSheet(f *excelize.File, sheet string, schema *Schema, target ExportTarget) (map[string]map[string]interface{}, error) {
+	rows, err := f.GetRows(sheet)
+	if err != nil {
+		return nil, err
+	}
+	if len(rows) < 2 {
+		return make(map[string]map[string]interface{}), nil
+	}
+	header := rows[0]
+	if len(header) == 0 || strings.TrimSpace(header[0]) != "ArrayDict" {
+		return nil, fmt.Errorf("第一行第一列必须是 ArrayDict")
+	}
+
+	fields := schema.Tables[sheet]
+	fieldByName := make(map[string]Field, len(fields))
+	for _, fld := range fields {
+		fieldByName[fld.Name] = fld
+	}
+
+	colNames := make([]string, len(header))
+	skipCol := make([]bool, len(header))
+	for i := range header {
+		h := strings.TrimSpace(header[i])
+		colNames[i] = h
+		if strings.HasPrefix(h, "#") {
+			skipCol[i] = true
+		}
+	}
+
+	result := make(map[string]map[string]interface{})
+	for ridx := 1; ridx < len(rows); ridx++ {
+		row := rows[ridx]
+		if len(row) == 0 {
+			continue
+		}
+		if k := strings.TrimSpace(firstCol(row)); k == "" || strings.HasPrefix(k, "#") {
+			continue
+		}
+
+		key := strings.TrimSpace(row[0])
+		if _, exists := result[key]; exists {
+			return nil, fmt.Errorf("表 %q 行 %d: 主键 ID %q 重复", sheet, ridx+1, key)
+		}
+
+		idType := schema.PrimaryKeyTypeForTable(sheet)
+		idVal, err := ParsePrimaryKeyCell(key, idType)
+		if err != nil {
+			return nil, fmt.Errorf("表 %q 行 %d: %w", sheet, ridx+1, err)
+		}
+
+		rec := make(map[string]interface{})
+		rec[RowJSONIDKey] = idVal
+
+		for c := 1; c < len(colNames); c++ {
+			if c >= len(skipCol) || skipCol[c] {
+				continue
+			}
+			name := colNames[c]
+			if name == "" || strings.HasPrefix(name, "#") {
+				continue
+			}
+			if strings.EqualFold(name, RowJSONIDKey) {
+				continue
+			}
+			fld, ok := fieldByName[name]
+			if !ok {
+				continue
+			}
+			if !FieldVisible(fld.Filter, target) {
+				continue
+			}
+			cell := ""
+			if c < len(row) {
+				cell = row[c]
+			}
+			val, err := cellValue(fld, cell, schema)
+			if err != nil {
+				return nil, fmt.Errorf("行 %d 列 %q: %w", ridx+1, name, err)
+			}
+			rec[name] = val
+		}
+		result[key] = rec
+	}
+	return result, nil
+}
+
+func firstCol(row []string) string {
+	if len(row) == 0 {
+		return ""
+	}
+	return row[0]
+}
+
+func cellValue(fld Field, raw string, schema *Schema) (interface{}, error) {
+	raw = strings.TrimSpace(raw)
+	if fld.ArraySplit != "" {
+		parts := strings.Split(raw, fld.ArraySplit)
+		for i := range parts {
+			parts[i] = strings.TrimSpace(parts[i])
+		}
+		if fld.Type == "string" {
+			return parts, nil
+		}
+		out := make([]interface{}, 0, len(parts))
+		for _, p := range parts {
+			if p == "" {
+				out = append(out, zeroForField(fld, schema))
+				continue
+			}
+			v, err := parseScalar(fld.Type, p, schema)
+			if err != nil {
+				return nil, err
+			}
+			out = append(out, v)
+		}
+		return out, nil
+	}
+	if raw == "" && fld.Default != "" {
+		raw = fld.Default
+	}
+	if raw == "" {
+		return zeroForField(fld, schema), nil
+	}
+	return parseScalar(fld.Type, raw, schema)
+}
+
+func zeroForField(fld Field, schema *Schema) interface{} {
+	switch fld.Type {
+	case "int":
+		return 0
+	case "int64":
+		return int64(0)
+	default:
+		if schema != nil && schema.Enums[fld.Type] != nil {
+			return 0
+		}
+		return ""
+	}
+}
+
+func parseScalar(typeName, raw string, schema *Schema) (interface{}, error) {
+	switch typeName {
+	case "string":
+		return raw, nil
+	case "int":
+		return parseIntDefault(raw, 0)
+	case "int64":
+		s := strings.TrimSpace(raw)
+		if s == "" {
+			return int64(0), nil
+		}
+		v, err := strconv.ParseInt(s, 10, 64)
+		if err != nil {
+			f, ferr := strconv.ParseFloat(s, 64)
+			if ferr != nil {
+				return nil, err
+			}
+			return int64(f), nil
+		}
+		return v, nil
+	default:
+		if schema.Enums[typeName] != nil {
+			if m, ok := schema.EnumValue[typeName]; ok {
+				if iv, ok2 := m[raw]; ok2 {
+					return iv, nil
+				}
+			}
+			v, err := parseIntDefault(raw, 0)
+			if err == nil {
+				return v, nil
+			}
+			return nil, fmt.Errorf("枚举 %s 无成员 %q", typeName, raw)
+		}
+		if ms, ok := schema.Structs[typeName]; ok && len(ms) > 0 && strings.HasPrefix(strings.TrimSpace(raw), "{") {
+			var nested map[string]interface{}
+			if err := json.Unmarshal([]byte(raw), &nested); err != nil {
+				return nil, fmt.Errorf("结构 %s JSON: %w", typeName, err)
+			}
+			return nested, nil
+		}
+		return raw, nil
+	}
+}

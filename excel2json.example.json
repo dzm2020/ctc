@@ -1,0 +1,13 @@
+{
+	"inputs": [
+		"./tables"
+	],
+	"output": {
+		"codePath": "output/gamedata",
+		"jsonPath": "output/json"
+	},
+	"target": "both",
+	"prettyJson": true,
+	"goPackage": "gamedata",
+	"skipGo": false
+}

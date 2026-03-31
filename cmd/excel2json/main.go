@@ -1,0 +1,138 @@
+package main
+
+import (
+	"encoding/json"
+	"flag"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"ctc/internal/config"
+	"ctc/internal/excelconv"
+	"ctc/internal/gogen"
+
+	"github.com/xuri/excelize/v2"
+)
+
+func main() {
+	configPath := flag.String("config", "", "配置文件 JSON 路径（必选）")
+	flag.Parse()
+
+	if strings.TrimSpace(*configPath) == "" {
+		fmt.Fprintln(os.Stderr, "用法: excel2json -config <配置文件.json>")
+		os.Exit(1)
+	}
+
+	cfg, err := config.Load(*configPath)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	jsonOut := cfg.JsonPathOrDefault()
+	goOut := cfg.CodePathOrDefault()
+	tgt, err := parseTarget(cfg.TargetOrDefault())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	files, err := resolveXlsxInputs(cfg)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	mergedTables := make(map[string]map[string]map[string]interface{})
+	var schemas []*excelconv.Schema
+	for _, xlsxPath := range files {
+		f, err := excelize.OpenFile(xlsxPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "打开表格 %s: %v\n", xlsxPath, err)
+			os.Exit(1)
+		}
+		schema, err := excelconv.ParseTypeSheet(f)
+		if err != nil {
+			_ = f.Close()
+			fmt.Fprintf(os.Stderr, "解析 @Type (%s): %v\n", xlsxPath, err)
+			os.Exit(1)
+		}
+		tables, err := excelconv.ConvertWorkbook(f, schema, tgt)
+		_ = f.Close()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "转表 (%s): %v\n", xlsxPath, err)
+			os.Exit(1)
+		}
+		schemas = append(schemas, schema)
+		if err := excelconv.MergeTableMaps(mergedTables, tables, xlsxPath); err != nil {
+			fmt.Fprintf(os.Stderr, "%v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("已处理 %s\n", xlsxPath)
+	}
+	schemaMerged := excelconv.MergeSchemas(schemas)
+
+	if err := os.MkdirAll(jsonOut, 0o755); err != nil {
+		fmt.Fprintf(os.Stderr, "创建目录: %v\n", err)
+		os.Exit(1)
+	}
+
+	indent := ""
+	if cfg.PrettyJSONOrDefault() {
+		indent = "  "
+	}
+
+	for _, name := range excelconv.StableTableNames(mergedTables) {
+		rows := mergedTables[name]
+		if err := writeJSON(filepath.Join(jsonOut, name+".json"), rows, indent); err != nil {
+			fmt.Fprintf(os.Stderr, "写入 %s.json: %v\n", name, err)
+			os.Exit(1)
+		}
+		fmt.Printf("已写入 %s.json（%d 行）\n", name, len(rows))
+	}
+
+	goPkg := cfg.GoPackageOrDefault()
+	if !cfg.SkipGo {
+		goOut = strings.TrimSpace(goOut)
+		if goOut != "" {
+			if err := gogen.WritePackage(goOut, goPkg, schemaMerged, tgt); err != nil {
+				fmt.Fprintf(os.Stderr, "生成 Go 包: %v\n", err)
+				os.Exit(1)
+			}
+			if err := gogen.GenerateBundle(goOut, goPkg, schemaMerged, tgt); err != nil {
+				fmt.Fprintf(os.Stderr, "生成 loader_gen.go: %v\n", err)
+				os.Exit(1)
+			}
+			fmt.Printf("已生成 Go 加载代码: %s (package %s)\n", goOut, goPkg)
+			fmt.Printf("  使用 LoadGameData(%q) 可一次加载 JSON 目录下的全部表\n", jsonOut)
+		}
+	}
+}
+
+func parseTarget(s string) (excelconv.ExportTarget, error) {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "both", "cs", "all":
+		return excelconv.ExportBoth, nil
+	case "client", "c":
+		return excelconv.ExportClient, nil
+	case "server", "s":
+		return excelconv.ExportServer, nil
+	default:
+		return 0, fmt.Errorf("配置 target 无效: %q（可选 both、client、server）", s)
+	}
+}
+
+func writeJSON(path string, v interface{}, indent string) error {
+	var b []byte
+	var err error
+	if indent != "" {
+		b, err = json.MarshalIndent(v, "", indent)
+	} else {
+		b, err = json.Marshal(v)
+	}
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, b, 0o644)
+}
