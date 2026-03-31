@@ -53,6 +53,22 @@ func getterMethodName(schemaName string) string {
 	return "Get" + string(unicode.ToUpper(r)) + s[n:]
 }
 
+func tableGroupTypeIdent(tableName, groupJSONKey string) string {
+	return tableName + "_rowGrp_" + privateFieldIdent(groupJSONKey)
+}
+
+func viewAsGroupMethodName(groupKey string) string {
+	p := privateFieldIdent(groupKey)
+	if p == "" {
+		return "ViewAsGroup"
+	}
+	r, n := utf8.DecodeRuneInString(p)
+	if r == utf8.RuneError {
+		return "ViewAsGroup"
+	}
+	return "ViewAs" + string(unicode.ToUpper(r)) + p[n:]
+}
+
 func rowJSONAuxTypeName(tableName string) string {
 	return "rowJSONAux_" + tableName
 }

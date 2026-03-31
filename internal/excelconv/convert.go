@@ -9,6 +9,7 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+
 // ConvertWorkbook 将工作簿中除 @Type 外、且在 Schema 中有表定义的 sheet 转为 map[表名][主键]行数据。
 func ConvertWorkbook(f *excelize.File, schema *Schema, target ExportTarget) (map[string]map[string]map[string]interface{}, error) {
 	out := make(map[string]map[string]map[string]interface{})
@@ -107,7 +108,8 @@ func convertDataSheet(f *excelize.File, sheet string, schema *Schema, target Exp
 			if err != nil {
 				return nil, fmt.Errorf("行 %d 列 %q: %w", ridx+1, name, err)
 			}
-			rec[name] = val
+			// JSON 始终扁平：字段名即列名，不参与 @Type「分组」嵌套。
+			rec[fld.Name] = val
 		}
 		result[key] = rec
 	}

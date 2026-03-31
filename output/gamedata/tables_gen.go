@@ -7,7 +7,35 @@ import (
 	"os"
 )
 
-// WallpaperRow 对应表 "Wallpaper" 的一行（首列为唯一 id，类型见 @Type「主键」）。
+// Wallpaper_rowGrp_group 表 "Wallpaper" 分组 "group"（由行扁平字段组装的视图，JSON 中无此嵌套）。
+type Wallpaper_rowGrp_group struct {
+	video1 string
+	time1  int
+}
+
+func (g *Wallpaper_rowGrp_group) GetVideo1() string {
+	return g.video1
+}
+
+func (g *Wallpaper_rowGrp_group) GetTime1() int {
+	return g.time1
+}
+
+// Wallpaper_rowGrp_group2 表 "Wallpaper" 分组 "group2"（由行扁平字段组装的视图，JSON 中无此嵌套）。
+type Wallpaper_rowGrp_group2 struct {
+	video2 string
+	time2  int
+}
+
+func (g *Wallpaper_rowGrp_group2) GetVideo2() string {
+	return g.video2
+}
+
+func (g *Wallpaper_rowGrp_group2) GetTime2() int {
+	return g.time2
+}
+
+// WallpaperRow 对应表 "Wallpaper" 的一行（JSON 扁平；@Type「分组」用于行视图与 Table.GetRowsByGroupKey）。
 type WallpaperRow struct {
 	id        int64
 	cover     string
@@ -85,9 +113,41 @@ func (r *WallpaperRow) GetTime3() int {
 	return r.time3
 }
 
+func (r *WallpaperRow) ViewAsGroup() Wallpaper_rowGrp_group {
+	return Wallpaper_rowGrp_group{
+		video1: r.video1,
+		time1:  r.time1,
+	}
+}
+
+func (r *WallpaperRow) ViewAsGroup2() Wallpaper_rowGrp_group2 {
+	return Wallpaper_rowGrp_group2{
+		video2: r.video2,
+		time2:  r.time2,
+	}
+}
+
+// Wallpaper_group 构造 @Type 分组 "group" 的 map 键（形参与组内字段顺序、类型一致）。
+func Wallpaper_group(video1 string, time1 int) Wallpaper_rowGrp_group {
+	return Wallpaper_rowGrp_group{
+		video1: video1,
+		time1:  time1,
+	}
+}
+
+// Wallpaper_group2 构造 @Type 分组 "group2" 的 map 键（形参与组内字段顺序、类型一致）。
+func Wallpaper_group2(video2 string, time2 int) Wallpaper_rowGrp_group2 {
+	return Wallpaper_rowGrp_group2{
+		video2: video2,
+		time2:  time2,
+	}
+}
+
 type WallpaperTable struct {
-	dict map[int64]*WallpaperRow
-	list []*WallpaperRow
+	dict           map[int64]*WallpaperRow
+	list           []*WallpaperRow
+	byGroup_group  map[Wallpaper_rowGrp_group][]*WallpaperRow  // @Type 分组 "group"
+	byGroup_group2 map[Wallpaper_rowGrp_group2][]*WallpaperRow // @Type 分组 "group2"
 }
 
 func (r *WallpaperTable) load(path string) error {
@@ -102,7 +162,27 @@ func (r *WallpaperTable) load(path string) error {
 	for _, row := range r.list {
 		r.dict[row.GetID()] = row
 	}
+	r.byGroup_group = make(map[Wallpaper_rowGrp_group][]*WallpaperRow)
+	r.byGroup_group2 = make(map[Wallpaper_rowGrp_group2][]*WallpaperRow)
+	for _, row := range r.list {
+		kg0 := Wallpaper_group(row.video1, row.time1)
+		r.byGroup_group[kg0] = append(r.byGroup_group[kg0], row)
+		kg1 := Wallpaper_group2(row.video2, row.time2)
+		r.byGroup_group2[kg1] = append(r.byGroup_group2[kg1], row)
+	}
 	return nil
+}
+
+// GetRowsByGroup_group 按 @Type 分组键查询行（形参顺序、类型与 Wallpaper_group 一致）。
+func (r *WallpaperTable) GetRowsByGroup_group(video1 string, time1 int) []*WallpaperRow {
+	k := Wallpaper_group(video1, time1)
+	return r.byGroup_group[k]
+}
+
+// GetRowsByGroup_group2 按 @Type 分组键查询行（形参顺序、类型与 Wallpaper_group2 一致）。
+func (r *WallpaperTable) GetRowsByGroup_group2(video2 string, time2 int) []*WallpaperRow {
+	k := Wallpaper_group2(video2, time2)
+	return r.byGroup_group2[k]
 }
 
 func (r *WallpaperTable) Get(id int64) *WallpaperRow {

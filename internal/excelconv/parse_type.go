@@ -10,7 +10,7 @@ import (
 
 const typeSheetName = "@Type"
 
-var typeHeader = []string{"种类", "对象类型", "中文描述", "字段名", "字段类型", "数组切割", "默认值", "筛选"}
+var typeHeader = []string{"种类", "对象类型", "中文描述", "字段名", "字段类型", "数组切割", "默认值", "筛选", "分组"}
 
 // ParseTypeSheet 解析名为 @Type 的 sheet。
 func ParseTypeSheet(f *excelize.File) (*Schema, error) {
@@ -21,12 +21,19 @@ func ParseTypeSheet(f *excelize.File) (*Schema, error) {
 	if len(rows) == 0 {
 		return nil, fmt.Errorf("@Type: 空表")
 	}
-	if !headerMatches(rows[0]) {
-		return nil, fmt.Errorf("@Type 第一行表头不匹配，期望 %v 得到 %v", typeHeader, rows[0])
+	h0 := rows[0]
+	if !headerMatches(h0) {
+		return nil, fmt.Errorf("@Type 第一行表头不匹配，期望前 8 列为 %v 得到 %v", typeHeader[:8], h0)
 	}
+	groupCol := groupColumnIndex(h0)
+	rowPadLen := 8
+	if groupCol >= 0 {
+		rowPadLen = groupCol + 1
+	}
+
 	s := NewSchema()
 	for i := 1; i < len(rows); i++ {
-		row := padRow(rows[i], 8)
+		row := padRow(rows[i], rowPadLen)
 		if rowAllEmpty(row) {
 			continue
 		}
@@ -37,6 +44,13 @@ func ParseTypeSheet(f *excelize.File) (*Schema, error) {
 			if tbl == "" {
 				return nil, fmt.Errorf("@Type 第 %d 行: 表头缺少表名", i+1)
 			}
+			grp := ""
+			if groupCol >= 0 {
+				grp = readTypeSheetGroupCell(f, groupCol, i)
+			}
+			if grp == "" {
+				grp = cellAt(row, groupCol)
+			}
 			fld := Field{
 				Table:      tbl,
 				NameCN:     strings.TrimSpace(row[2]),
@@ -45,6 +59,7 @@ func ParseTypeSheet(f *excelize.File) (*Schema, error) {
 				ArraySplit: strings.TrimSpace(row[5]),
 				Default:    strings.TrimSpace(row[6]),
 				Filter:     FieldFilter(strings.TrimSpace(row[7])),
+				Group:      grp,
 			}
 			if fld.Name == "" || fld.Type == "" {
 				return nil, fmt.Errorf("@Type 第 %d 行: 表 %s 字段名或类型为空", i+1, tbl)
@@ -116,15 +131,57 @@ func ParseTypeSheet(f *excelize.File) (*Schema, error) {
 }
 
 func headerMatches(h []string) bool {
-	if len(h) < len(typeHeader) {
+	if len(h) < 8 {
 		return false
 	}
-	for i := range typeHeader {
+	for i := 0; i < 8; i++ {
 		if strings.TrimSpace(h[i]) != typeHeader[i] {
 			return false
 		}
 	}
 	return true
+}
+
+// groupColumnIndex 在表头行中查找列名「分组」的下标（任意列位置）；未找到返回 -1。
+func groupColumnIndex(header []string) int {
+	for i, c := range header {
+		if typeHeaderCellMatch(c, typeHeader[8]) {
+			return i
+		}
+	}
+	return -1
+}
+
+func typeHeaderCellMatch(cell, want string) bool {
+	t := strings.TrimSpace(strings.ReplaceAll(cell, "\u00a0", ""))
+	return t == strings.TrimSpace(want)
+}
+
+// readTypeSheetGroupCell 用工作表坐标读「分组」列，合并单元格时与 Excel 一致（GetRows 常为从格空）。
+func readTypeSheetGroupCell(f *excelize.File, groupCol, rowIndexInRows int) string {
+	if f == nil || groupCol < 0 {
+		return ""
+	}
+	col, err := excelize.ColumnNumberToName(groupCol + 1)
+	if err != nil {
+		return ""
+	}
+	ref, err := excelize.JoinCellName(col, rowIndexInRows+1)
+	if err != nil {
+		return ""
+	}
+	v, err := f.GetCellValue(typeSheetName, ref)
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(v)
+}
+
+func cellAt(row []string, col int) string {
+	if col < 0 || col >= len(row) {
+		return ""
+	}
+	return strings.TrimSpace(row[col])
 }
 
 func padRow(r []string, n int) []string {
