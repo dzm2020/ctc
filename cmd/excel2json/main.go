@@ -11,6 +11,7 @@ import (
 	"ctc/internal/config"
 	"ctc/internal/excelconv"
 	"ctc/internal/gogen"
+	"ctc/pkg/tablebin"
 
 	"github.com/xuri/excelize/v2"
 )
@@ -96,27 +97,41 @@ func main() {
 	for _, name := range excelconv.StableTableNames(mergedTables) {
 		rows := mergedTables[name]
 		arr := excelconv.TableRowsToOrderedSlice(rows)
-		if err := writeJSON(filepath.Join(jsonOut, name+".json"), arr, indent); err != nil {
-			fmt.Fprintf(os.Stderr, "写入 %s.json: %v\n", name, err)
-			os.Exit(1)
+		if cfg.BinaryExport {
+			idKind, cols := excelconv.BuildTableBinSpec(schemaMerged, name, exportTags)
+			binPath := filepath.Join(jsonOut, name+".bin")
+			if err := tablebin.EncodeFile(binPath, excelconv.RowJSONIDKey, idKind, cols, arr); err != nil {
+				fmt.Fprintf(os.Stderr, "写入 %s.bin: %v\n", name, err)
+				os.Exit(1)
+			}
+			fmt.Printf("已写入 %s.bin（%d 行）\n", name, len(rows))
+		} else {
+			if err := writeJSON(filepath.Join(jsonOut, name+".json"), arr, indent); err != nil {
+				fmt.Fprintf(os.Stderr, "写入 %s.json: %v\n", name, err)
+				os.Exit(1)
+			}
+			fmt.Printf("已写入 %s.json（%d 行）\n", name, len(rows))
 		}
-		fmt.Printf("已写入 %s.json（%d 行）\n", name, len(rows))
 	}
 
 	goPkg := cfg.GoPackageOrDefault()
 	if !cfg.SkipGo {
 		goOut = strings.TrimSpace(goOut)
 		if goOut != "" {
-			if err := gogen.WritePackage(goOut, goPkg, schemaMerged, exportTags); err != nil {
+			if err := gogen.WritePackage(goOut, goPkg, schemaMerged, exportTags, cfg.BinaryExport); err != nil {
 				fmt.Fprintf(os.Stderr, "生成 Go 包: %v\n", err)
 				os.Exit(1)
 			}
-			if err := gogen.GenerateBundle(goOut, goPkg, schemaMerged, exportTags); err != nil {
+			if err := gogen.GenerateBundle(goOut, goPkg, schemaMerged, cfg.BinaryExport); err != nil {
 				fmt.Fprintf(os.Stderr, "生成 loader_gen.go: %v\n", err)
 				os.Exit(1)
 			}
 			fmt.Printf("已生成 Go 加载代码: %s (package %s)\n", goOut, goPkg)
-			fmt.Printf("  使用 LoadGameData(%q) 可一次加载 JSON 目录下的全部表\n", jsonOut)
+			if cfg.BinaryExport {
+				fmt.Printf("  使用 LoadGameData(%q) 加载 .bin（与当前 binaryExport 配置一致）\n", jsonOut)
+			} else {
+				fmt.Printf("  使用 LoadGameData(%q) 加载 .json（与当前 binaryExport 配置一致）\n", jsonOut)
+			}
 		}
 	}
 }

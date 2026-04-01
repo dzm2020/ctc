@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 )
 
-// GameData 汇总各表数据；请使用与 excel2json -out 相同的目录调用 LoadGameData。
+// GameData 汇总各表数据；请使用与 excel2json 配置的 jsonPath 目录调用 LoadGameData（扩展名为 {{.DataExt}}，与生成时 binaryExport 一致）。
 type GameData struct {
 {{- if .SingleTable}}
 	{{.FirstTable}}Table
@@ -18,17 +18,17 @@ type GameData struct {
 {{- end}}
 }
 
-// LoadGameData 在 jsonDir 下按 «表名».json 加载全部表（JSON 为行对象数组）。
-func LoadGameData(jsonDir string) (*GameData, error) {
+// LoadGameData 在 dataDir 下加载全部表文件（扩展名由生成时 binaryExport 决定：{{.DataExt}}）。
+func LoadGameData(dataDir string) (*GameData, error) {
 	d := &GameData{}
 {{- if .SingleTable}}
-	if err := d.{{.FirstTable}}Table.load(filepath.Join(jsonDir, {{printf "%q" .FirstJSON}})); err != nil {
-		return nil, fmt.Errorf("load {{$.FirstJSON}}: %w", err)
+	if err := d.{{.FirstTable}}Table.load(filepath.Join(dataDir, {{printf "%q" .FirstDataFile}})); err != nil {
+		return nil, fmt.Errorf("load {{$.FirstDataFile}}: %w", err)
 	}
 {{- else}}
 {{- range .LoadLines}}
-	if err := d.{{.Receiver}}.load(filepath.Join(jsonDir, {{printf "%q" .JSONName}})); err != nil {
-		return nil, fmt.Errorf("load {{.JSONName}}: %w", err)
+	if err := d.{{.Receiver}}.load(filepath.Join(dataDir, {{printf "%q" .DataFile}})); err != nil {
+		return nil, fmt.Errorf("load {{.DataFile}}: %w", err)
 	}
 {{- end}}
 {{- end}}

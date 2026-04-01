@@ -7,20 +7,20 @@ import (
 	"path/filepath"
 )
 
-// GameData 汇总各表数据；请使用与 excel2json -out 相同的目录调用 LoadGameData。
+// GameData 汇总各表数据；请使用与 excel2json 配置的 jsonPath 目录调用 LoadGameData（扩展名为 .bin（紧凑表二进制），与生成时 binaryExport 一致）。
 type GameData struct {
 	Emoji     EmojiTable
 	Wallpaper WallpaperTable
 }
 
-// LoadGameData 在 jsonDir 下按 «表名».json 加载全部表（JSON 为行对象数组）。
-func LoadGameData(jsonDir string) (*GameData, error) {
+// LoadGameData 在 dataDir 下加载全部表文件（扩展名由生成时 binaryExport 决定：.bin（紧凑表二进制））。
+func LoadGameData(dataDir string) (*GameData, error) {
 	d := &GameData{}
-	if err := d.Emoji.load(filepath.Join(jsonDir, "Emoji.json")); err != nil {
-		return nil, fmt.Errorf("load Emoji.json: %w", err)
+	if err := d.Emoji.load(filepath.Join(dataDir, "Emoji.bin")); err != nil {
+		return nil, fmt.Errorf("load Emoji.bin: %w", err)
 	}
-	if err := d.Wallpaper.load(filepath.Join(jsonDir, "Wallpaper.json")); err != nil {
-		return nil, fmt.Errorf("load Wallpaper.json: %w", err)
+	if err := d.Wallpaper.load(filepath.Join(dataDir, "Wallpaper.bin")); err != nil {
+		return nil, fmt.Errorf("load Wallpaper.bin: %w", err)
 	}
 	return d, nil
 }

@@ -3,8 +3,9 @@
 package gamedata
 
 import (
+	"ctc/pkg/tablebin"
 	"encoding/json"
-	"os"
+	"slices"
 )
 
 // EmojiRow 对应表 "Emoji" 的一行（JSON 扁平；@Type「分组/索引」用于行视图与 Table 查询）。
@@ -15,19 +16,19 @@ type EmojiRow struct {
 	icon          string
 	unlockType    int
 	conditionText string
-	speed         string
+	speed         []float64
 	grids         int
 }
 
 type rowJSONAux_Emoji struct {
-	ID            int64  `json:"id"`
-	Name          string `json:"Name"`
-	ShortName     string `json:"ShortName"`
-	Icon          string `json:"Icon"`
-	UnlockType    int    `json:"UnlockType"`
-	ConditionText string `json:"ConditionText"`
-	Speed         string `json:"Speed"`
-	Grids         int    `json:"Grids"`
+	ID            int64     `json:"id"`
+	Name          string    `json:"Name"`
+	ShortName     string    `json:"ShortName"`
+	Icon          string    `json:"Icon"`
+	UnlockType    int       `json:"UnlockType"`
+	ConditionText string    `json:"ConditionText"`
+	Speed         []float64 `json:"Speed"`
+	Grids         int       `json:"Grids"`
 }
 
 func (r *EmojiRow) UnmarshalJSON(data []byte) error {
@@ -70,8 +71,8 @@ func (r *EmojiRow) GetConditionText() string {
 	return r.conditionText
 }
 
-func (r *EmojiRow) GetSpeed() string {
-	return r.speed
+func (r *EmojiRow) GetSpeed() []float64 {
+	return slices.Clone(r.speed)
 }
 
 func (r *EmojiRow) GetGrids() int {
@@ -84,12 +85,61 @@ type EmojiTable struct {
 }
 
 func (r *EmojiTable) load(path string) error {
-	data, err := os.ReadFile(path)
+	dec, err := tablebin.Open(path)
 	if err != nil {
 		return err
 	}
-	if err := json.Unmarshal(data, &r.list); err != nil {
-		return err
+	n := dec.NumRows()
+	r.list = make([]*EmojiRow, 0, n)
+	for i := uint64(0); i < n; i++ {
+		row := &EmojiRow{}
+		row.id, err = dec.ReadInt64Zigzag()
+		if err != nil {
+			return err
+		}
+		{
+			row.name, err = dec.ReadString()
+			if err != nil {
+				return err
+			}
+		}
+		{
+			row.shortName, err = dec.ReadString()
+			if err != nil {
+				return err
+			}
+		}
+		{
+			row.icon, err = dec.ReadString()
+			if err != nil {
+				return err
+			}
+		}
+		{
+			row.unlockType, err = dec.ReadInt()
+			if err != nil {
+				return err
+			}
+		}
+		{
+			row.conditionText, err = dec.ReadString()
+			if err != nil {
+				return err
+			}
+		}
+		{
+			row.speed, err = dec.ReadFloat64Slice()
+			if err != nil {
+				return err
+			}
+		}
+		{
+			row.grids, err = dec.ReadInt()
+			if err != nil {
+				return err
+			}
+		}
+		r.list = append(r.list, row)
 	}
 	r.dict = make(map[int64]*EmojiRow)
 	for _, row := range r.list {

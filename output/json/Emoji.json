@@ -5,7 +5,9 @@
     "Icon": "UI\\Emoji\\UI_Dynamic_ChatEmoji_005.asset",
     "Name": "EmojiName05",
     "ShortName": "EmojiShortName05",
-    "Speed": "0.1",
+    "Speed": [
+      0.1
+    ],
     "UnlockType": 1,
     "id": 10
   },
@@ -15,7 +17,9 @@
     "Icon": "UI\\Emoji\\UI_Dynamic_ChatEmoji_007.asset",
     "Name": "EmojiName07",
     "ShortName": "EmojiShortName07",
-    "Speed": "0.1",
+    "Speed": [
+      0.1
+    ],
     "UnlockType": 1,
     "id": 12
   },
@@ -25,7 +29,9 @@
     "Icon": "UI\\Emoji\\UI_Dynamic_ChatEmoji_009.asset",
     "Name": "EmojiName09",
     "ShortName": "EmojiShortName09",
-    "Speed": "0.1",
+    "Speed": [
+      0.1
+    ],
     "UnlockType": 1,
     "id": 14
   },
@@ -35,7 +41,9 @@
     "Icon": "UI\\Emoji\\UI_Dynamic_ChatEmoji_010.asset",
     "Name": "EmojiName10",
     "ShortName": "EmojiShortName10",
-    "Speed": "0.1",
+    "Speed": [
+      0.1
+    ],
     "UnlockType": 1,
     "id": 15
   },
@@ -45,7 +53,9 @@
     "Icon": "UI\\Emoji\\UI_Dynamic_ChatEmoji_012.asset",
     "Name": "EmojiName12",
     "ShortName": "EmojiShortName12",
-    "Speed": "0.1",
+    "Speed": [
+      0.1
+    ],
     "UnlockType": 0,
     "id": 2
   },
@@ -55,7 +65,9 @@
     "Icon": "UI\\Emoji\\UI_Dynamic_ChatEmoji_003.asset",
     "Name": "EmojiName03",
     "ShortName": "EmojiShortName03",
-    "Speed": "0.1",
+    "Speed": [
+      0.1
+    ],
     "UnlockType": 1,
     "id": 8
   }

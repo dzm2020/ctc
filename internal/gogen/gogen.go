@@ -14,7 +14,7 @@ import (
 //   - enums_gen.go、structs_gen.go
 //   - 每张数据表一个 table_<slug>_gen.go（原 tables_gen.go 已废弃，会尝试删除）
 // loader_gen.go 由 GenerateBundle 单独写出。
-func WritePackage(dir, pkg string, schema *excelconv.Schema, exportTags []string) error {
+func WritePackage(dir, pkg string, schema *excelconv.Schema, exportTags []string, binaryData bool) error {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func WritePackage(dir, pkg string, schema *excelconv.Schema, exportTags []string
 			} else {
 				fname = fmt.Sprintf("table_%s_%d_gen.go", slug, n+1)
 			}
-			src, err := renderOneTableGoFile(pkg, tname, schema, exportTags)
+			src, err := renderOneTableGoFile(pkg, tname, schema, exportTags, binaryData)
 			if err != nil {
 				return fmt.Errorf("table %q (%s): %w", tname, fname, err)
 			}
@@ -142,8 +142,8 @@ func tableRowPrimaryKeyGoType(schema *excelconv.Schema, table string) string {
 	}
 }
 
-// GenerateBundle 写出 GameData 与 LoadGameData（jsonDir 应与 excel2json -out 一致）。
-func GenerateBundle(dir, pkg string, schema *excelconv.Schema, _ []string) error {
+// GenerateBundle 写出 GameData 与 LoadGameData；binaryData 为 true 时仅生成 .bin 加载（与 excel2json binaryExport 一致）。
+func GenerateBundle(dir, pkg string, schema *excelconv.Schema, binaryData bool) error {
 	var tnames []string
 	for n := range schema.Tables {
 		tnames = append(tnames, n)
@@ -154,7 +154,7 @@ func GenerateBundle(dir, pkg string, schema *excelconv.Schema, _ []string) error
 	}
 	sort.Strings(tnames)
 
-	raw, err := renderLoaderFile(pkg, tnames)
+	raw, err := renderLoaderFile(pkg, tnames, binaryData)
 	if err != nil {
 		return fmt.Errorf("loader template: %w", err)
 	}

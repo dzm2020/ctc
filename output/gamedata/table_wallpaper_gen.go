@@ -3,8 +3,9 @@
 package gamedata
 
 import (
+	"ctc/pkg/tablebin"
 	"encoding/json"
-	"os"
+	"slices"
 )
 
 // Wallpaper_rowGrp_group 表 "Wallpaper" 分组 "group"（由行扁平字段组装的视图，JSON 中无此嵌套）。
@@ -51,27 +52,29 @@ func (g *Wallpaper_rowIdx_index1) GetTime1() int {
 
 // WallpaperRow 对应表 "Wallpaper" 的一行（JSON 扁平；@Type「分组/索引」用于行视图与 Table 查询）。
 type WallpaperRow struct {
-	id        int64
-	cover     string
-	video1    string
-	time1     int
-	video2    string
-	time2     int
-	typeField int
-	video3    string
-	time3     int
+	id             int64
+	cover          string
+	video1         string
+	time1          int
+	video2         string
+	time2          int
+	typeField      int
+	video3         string
+	time3          int
+	showRewardList []ItemConfig
 }
 
 type rowJSONAux_Wallpaper struct {
-	ID     int64  `json:"id"`
-	Cover  string `json:"Cover"`
-	Video1 string `json:"Video1"`
-	Time1  int    `json:"Time1"`
-	Video2 string `json:"Video2"`
-	Time2  int    `json:"Time2"`
-	Type   int    `json:"Type"`
-	Video3 string `json:"Video3"`
-	Time3  int    `json:"Time3"`
+	ID             int64        `json:"id"`
+	Cover          string       `json:"Cover"`
+	Video1         string       `json:"Video1"`
+	Time1          int          `json:"Time1"`
+	Video2         string       `json:"Video2"`
+	Time2          int          `json:"Time2"`
+	Type           int          `json:"Type"`
+	Video3         string       `json:"Video3"`
+	Time3          int          `json:"Time3"`
+	ShowRewardList []ItemConfig `json:"ShowRewardList"`
 }
 
 func (r *WallpaperRow) UnmarshalJSON(data []byte) error {
@@ -88,6 +91,7 @@ func (r *WallpaperRow) UnmarshalJSON(data []byte) error {
 	r.typeField = u.Type
 	r.video3 = u.Video3
 	r.time3 = u.Time3
+	r.showRewardList = u.ShowRewardList
 	return nil
 }
 
@@ -125,6 +129,10 @@ func (r *WallpaperRow) GetVideo3() string {
 
 func (r *WallpaperRow) GetTime3() int {
 	return r.time3
+}
+
+func (r *WallpaperRow) GetShowRewardList() []ItemConfig {
+	return slices.Clone(r.showRewardList)
 }
 
 func (r *WallpaperRow) ViewAsGroup() Wallpaper_rowGrp_group {
@@ -181,12 +189,80 @@ type WallpaperTable struct {
 }
 
 func (r *WallpaperTable) load(path string) error {
-	data, err := os.ReadFile(path)
+	dec, err := tablebin.Open(path)
 	if err != nil {
 		return err
 	}
-	if err := json.Unmarshal(data, &r.list); err != nil {
-		return err
+	n := dec.NumRows()
+	r.list = make([]*WallpaperRow, 0, n)
+	for i := uint64(0); i < n; i++ {
+		row := &WallpaperRow{}
+		row.id, err = dec.ReadInt64Zigzag()
+		if err != nil {
+			return err
+		}
+		{
+			row.cover, err = dec.ReadString()
+			if err != nil {
+				return err
+			}
+		}
+		{
+			row.video1, err = dec.ReadString()
+			if err != nil {
+				return err
+			}
+		}
+		{
+			row.time1, err = dec.ReadInt()
+			if err != nil {
+				return err
+			}
+		}
+		{
+			row.video2, err = dec.ReadString()
+			if err != nil {
+				return err
+			}
+		}
+		{
+			row.time2, err = dec.ReadInt()
+			if err != nil {
+				return err
+			}
+		}
+		{
+			row.typeField, err = dec.ReadInt()
+			if err != nil {
+				return err
+			}
+		}
+		{
+			row.video3, err = dec.ReadString()
+			if err != nil {
+				return err
+			}
+		}
+		{
+			row.time3, err = dec.ReadInt()
+			if err != nil {
+				return err
+			}
+		}
+		{
+			var _bss []string
+			_bss, err = dec.ReadStringSlice()
+			if err != nil {
+				return err
+			}
+			row.showRewardList = make([]ItemConfig, len(_bss))
+			for _i := range _bss {
+				if err := json.Unmarshal([]byte(_bss[_i]), &row.showRewardList[_i]); err != nil {
+					return err
+				}
+			}
+		}
+		r.list = append(r.list, row)
 	}
 	r.dict = make(map[int64]*WallpaperRow)
 	for _, row := range r.list {

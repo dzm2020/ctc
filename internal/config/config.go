@@ -23,6 +23,8 @@ type Config struct {
 	GoPackage string `json:"goPackage"`
 	// SkipGo 为 true 时不生成 Go 代码，默认 false。
 	SkipGo bool `json:"skipGo"`
+	// BinaryExport 为 true：仅写出 «表名».bin（pkg/tablebin 紧凑格式），且生成仅支持 .bin 的加载代码；为 false：仅写出 «表名».json 且生成仅支持 JSON 加载。二者互斥，运行时只存在一种表文件。
+	BinaryExport bool `json:"binaryExport"`
 }
 
 // Output 描述生成物输出路径。

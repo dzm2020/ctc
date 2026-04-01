@@ -7,6 +7,35 @@ import (
 	"slices"
 )
 
+// ItemConfig 由策划表 @Type 生成。
+type ItemConfig struct {
+	iD  int
+	num int
+}
+
+type structJSONAux_ItemConfig struct {
+	ID  int `json:"ID"`
+	Num int `json:"Num"`
+}
+
+func (s *ItemConfig) UnmarshalJSON(data []byte) error {
+	var u structJSONAux_ItemConfig
+	if err := json.Unmarshal(data, &u); err != nil {
+		return err
+	}
+	s.iD = u.ID
+	s.num = u.Num
+	return nil
+}
+
+func (s *ItemConfig) GetID() int {
+	return s.iD
+}
+
+func (s *ItemConfig) GetNum() int {
+	return s.num
+}
+
 // LevelItemConfig 由策划表 @Type 生成。
 type LevelItemConfig struct {
 	start  int

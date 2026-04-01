@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+
+	"ctc/pkg/tablebin"
 )
 
 // LoadRawTable 加载 {表名}.json，格式为 map[主键字符串]行对象（与 excel2json 输出一致）。
@@ -17,6 +19,12 @@ func LoadRawTable(path string) (map[string]map[string]interface{}, error) {
 		return nil, fmt.Errorf("json: %w", err)
 	}
 	return out, nil
+}
+
+// OpenTableBin 打开 excel2json binaryExport 写出的 .bin（紧凑表格式，见 pkg/tablebin）。
+// 按列解码需使用生成表代码的 load(".bin") 或自行按 tablebin.Column 顺序调用 Decoder。
+func OpenTableBin(path string) (*tablebin.Decoder, error) {
+	return tablebin.Open(path)
 }
 
 // LoadEnums 从自定义 JSON 加载枚举映射；excel2json 不再生成 __enums__.json，枚举请用生成的 Go 常量。

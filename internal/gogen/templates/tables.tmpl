@@ -3,12 +3,13 @@
 package {{.Pkg}}
 
 import (
-	"encoding/json"
-	"os"{{if .NeedSlices}}
+	"encoding/json"{{if .NeedOS}}
+	"os"{{end}}{{if .NeedSlices}}
 	"slices"{{end}}{{if .NeedFmt}}
 	"fmt"{{end}}{{if .NeedStrconv}}
 	"strconv"{{end}}{{if .NeedGroupStrings}}
-	"strings"{{end}}
+	"strings"{{end}}{{if .NeedTableBin}}
+	"ctc/pkg/tablebin"{{end}}
 )
 
 {{end}}
@@ -127,6 +128,46 @@ type {{.TableName}}Table struct {
 }
 
 func (r *{{.TableName}}Table) load(path string) error {
+{{- if .BinaryData}}
+	dec, err := tablebin.Open(path)
+	if err != nil {
+		return err
+	}
+	n := dec.NumRows()
+	r.list = make([]*{{.TableName}}Row, 0, n)
+	for i := uint64(0); i < n; i++ {
+		row := &{{.TableName}}Row{}
+{{- if eq .IDGoType "int64"}}
+		row.id, err = dec.ReadInt64Zigzag()
+		if err != nil {
+			return err
+		}
+{{- else if eq .IDGoType "int"}}
+		row.id, err = dec.ReadInt()
+		if err != nil {
+			return err
+		}
+{{- else}}
+		row.id, err = dec.ReadString()
+		if err != nil {
+			return err
+		}
+{{- end}}
+{{- range .Fields}}
+		{
+{{- range .BinReadLines}}
+{{.}}
+{{- end}}
+		}
+{{- end}}
+		r.list = append(r.list, row)
+	}
+	r.dict = make(map[{{.IDGoType}}]*{{.TableName}}Row)
+	for _, row := range r.list {
+		r.dict[row.GetID()] = row
+	}
+	return nil
+{{- else}}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
@@ -139,6 +180,7 @@ func (r *{{.TableName}}Table) load(path string) error {
 		r.dict[row.GetID()] = row
 	}
 	return nil
+{{- end}}
 }
 
 func (r *{{.TableName}}Table) Get(id {{.IDGoType}}) *{{.TableName}}Row {
@@ -188,6 +230,62 @@ type {{.TableName}}Table struct {
 }
 
 func (r *{{.TableName}}Table) load(path string) error {
+{{- if .BinaryData}}
+	dec, err := tablebin.Open(path)
+	if err != nil {
+		return err
+	}
+	n := dec.NumRows()
+	r.list = make([]*{{.TableName}}Row, 0, n)
+	for i := uint64(0); i < n; i++ {
+		row := &{{.TableName}}Row{}
+{{- if eq .IDGoType "int64"}}
+		row.id, err = dec.ReadInt64Zigzag()
+		if err != nil {
+			return err
+		}
+{{- else if eq .IDGoType "int"}}
+		row.id, err = dec.ReadInt()
+		if err != nil {
+			return err
+		}
+{{- else}}
+		row.id, err = dec.ReadString()
+		if err != nil {
+			return err
+		}
+{{- end}}
+{{- range .Fields}}
+		{
+{{- range .BinReadLines}}
+{{.}}
+{{- end}}
+		}
+{{- end}}
+		r.list = append(r.list, row)
+	}
+	r.dict = make(map[{{.IDGoType}}]*{{.TableName}}Row)
+	for _, row := range r.list {
+		r.dict[row.GetID()] = row
+	}
+{{- range .GroupSlots}}
+	r.byGroup_{{.MapSuffix}} = make(map[{{if .Comparable}}{{.GroupType}}{{else}}string{{end}}][]*{{$.TableName}}Row)
+{{- end}}
+{{- range .IndexSlots}}
+	r.byIndex_{{.MapSuffix}} = make(map[{{if .Comparable}}{{.IndexType}}{{else}}string{{end}}]*{{$.TableName}}Row)
+{{- end}}
+	for _, row := range r.list {
+{{- range .GroupSlots}}
+		{{.VarName}} := {{.RowKeyCall}}
+		r.byGroup_{{.MapSuffix}}[{{.VarName}}] = append(r.byGroup_{{.MapSuffix}}[{{.VarName}}], row)
+{{- end}}
+{{- range .IndexSlots}}
+		{{.VarName}} := {{.RowKeyCall}}
+		r.byIndex_{{.MapSuffix}}[{{.VarName}}] = row
+{{- end}}
+	}
+	return nil
+{{- else}}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
@@ -216,6 +314,7 @@ func (r *{{.TableName}}Table) load(path string) error {
 {{- end}}
 	}
 	return nil
+{{- end}}
 }
 
 {{- range .GetRowsMethods}}

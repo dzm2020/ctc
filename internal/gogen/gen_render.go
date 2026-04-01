@@ -107,6 +107,7 @@ type structFileHeaderTmpl struct {
 type structFieldTmpl struct {
 	Priv, GoType, JSONName, Exported, Getter string
 	UseSliceGetter                         bool
+	BinReadLines                           []string // 仅表行字段：tablebin 解码语句块
 }
 
 type configStructTmpl struct {
@@ -158,10 +159,13 @@ func renderStructsFile(pkg string, snames []string, schema *excelconv.Schema, ex
 
 type tableFileHeaderTmpl struct {
 	Pkg              string
+	NeedOS           bool // JSON 加载需要 os.ReadFile；仅 .bin 时为 false
 	NeedSlices       bool
 	NeedFmt          bool
 	NeedStrconv      bool
 	NeedGroupStrings bool
+	// NeedTableBin 为 true 时 import ctc/pkg/tablebin。
+	NeedTableBin bool
 }
 
 type nestedGroupTmpl struct {
@@ -206,8 +210,10 @@ type tableRowTmpl struct {
 }
 
 type tableContainerNoGroupTmpl struct {
-	TableName string
-	IDGoType  string
+	TableName  string
+	IDGoType   string
+	Fields     []structFieldTmpl
+	BinaryData bool
 }
 
 type tableGroupSlotTmpl struct {
@@ -255,6 +261,8 @@ type getByIndexMethodTmpl struct {
 type tableContainerGroupTmpl struct {
 	TableName         string
 	IDGoType          string
+	Fields            []structFieldTmpl
+	BinaryData        bool
 	GroupSlots        []tableGroupSlotTmpl
 	IndexSlots        []tableIndexSlotTmpl
 	GetRowsMethods    []getRowsMethodTmpl
@@ -308,26 +316,33 @@ type loaderTableField struct {
 
 type loaderLoadLine struct {
 	Receiver string
-	JSONName string
+	DataFile string // «表名».json 或 «表名».bin（由生成时 binaryExport 决定）
 }
 
 type loaderTmpl struct {
-	Pkg         string
-	SingleTable bool
-	FirstTable  string
-	FirstJSON   string
-	TableFields []loaderTableField
-	LoadLines   []loaderLoadLine
+	Pkg           string
+	SingleTable   bool
+	FirstTable    string
+	FirstDataFile string
+	TableFields   []loaderTableField
+	LoadLines     []loaderLoadLine
+	DataExt       string // ".json" 或 ".bin"，用于注释
 }
 
-func renderLoaderFile(pkg string, tnames []string) (string, error) {
+func renderLoaderFile(pkg string, tnames []string, binaryData bool) (string, error) {
 	t := codegenRoot()
 	var buf bytes.Buffer
-	data := loaderTmpl{Pkg: pkg}
+	ext := ".json"
+	dataExtComment := ".json（JSON 行数组）"
+	if binaryData {
+		ext = ".bin"
+		dataExtComment = ".bin（紧凑表二进制）"
+	}
+	data := loaderTmpl{Pkg: pkg, DataExt: dataExtComment}
 	if len(tnames) == 1 {
 		data.SingleTable = true
 		data.FirstTable = tnames[0]
-		data.FirstJSON = tnames[0] + ".json"
+		data.FirstDataFile = tnames[0] + ext
 	} else {
 		for _, tn := range tnames {
 			data.TableFields = append(data.TableFields, loaderTableField{
@@ -336,7 +351,7 @@ func renderLoaderFile(pkg string, tnames []string) (string, error) {
 			})
 			data.LoadLines = append(data.LoadLines, loaderLoadLine{
 				Receiver: gameDataFieldName(tn),
-				JSONName: tn + ".json",
+				DataFile: tn + ext,
 			})
 		}
 	}

@@ -8,20 +8,20 @@ import (
 )
 
 // renderOneTableGoFile 生成单张表对应的 Go 源文件内容（package + import + 该表全部类型与方法）。
-func renderOneTableGoFile(pkg, tname string, schema *excelconv.Schema, exportTags []string) (string, error) {
+func renderOneTableGoFile(pkg, tname string, schema *excelconv.Schema, exportTags []string, binaryData bool) (string, error) {
 	tpl := codegenRoot()
 	var buf bytes.Buffer
-	hdr := computeTableFileHeaderForTable(pkg, tname, schema, exportTags)
+	hdr := computeTableFileHeaderForTable(pkg, tname, schema, exportTags, binaryData)
 	if err := tpl.ExecuteTemplate(&buf, "table_file_header", hdr); err != nil {
 		return "", err
 	}
-	if err := appendTableDefinitions(&buf, tpl, tname, schema, exportTags); err != nil {
+	if err := appendTableDefinitions(&buf, tpl, tname, schema, exportTags, binaryData); err != nil {
 		return "", err
 	}
 	return buf.String(), nil
 }
 
-func computeTableFileHeaderForTable(pkg, tname string, schema *excelconv.Schema, exportTags []string) tableFileHeaderTmpl {
+func computeTableFileHeaderForTable(pkg, tname string, schema *excelconv.Schema, exportTags []string, binaryData bool) tableFileHeaderTmpl {
 	vis := visibleTableFields(schema.Tables[tname], exportTags)
 	needSlices := tableFieldsNeedSlices(vis)
 	hasLookup := len(excelconv.DistinctFieldGroups(vis)) > 0 || len(excelconv.DistinctFieldIndexes(vis)) > 0
@@ -62,14 +62,16 @@ func computeTableFileHeaderForTable(pkg, tname string, schema *excelconv.Schema,
 	}
 	return tableFileHeaderTmpl{
 		Pkg:              pkg,
+		NeedOS:           !binaryData,
 		NeedSlices:       needSlices,
 		NeedFmt:          needFmt,
 		NeedStrconv:      needStrconv,
 		NeedGroupStrings: hasLookup && needStrings,
+		NeedTableBin:     binaryData,
 	}
 }
 
-func appendTableDefinitions(buf *bytes.Buffer, tpl *template.Template, tname string, schema *excelconv.Schema, exportTags []string) error {
+func appendTableDefinitions(buf *bytes.Buffer, tpl *template.Template, tname string, schema *excelconv.Schema, exportTags []string, binaryData bool) error {
 	visible := visibleTableFields(schema.Tables[tname], exportTags)
 	emit := excelconv.RowStructEmitOrder(visible)
 
@@ -115,7 +117,11 @@ func appendTableDefinitions(buf *bytes.Buffer, tpl *template.Template, tname str
 	idGo := tableRowPrimaryKeyGoType(schema, tname)
 	fields := make([]structFieldTmpl, 0, len(visible))
 	for _, fld := range visible {
-		fields = append(fields, fieldToStructFieldTmpl(fld, schema))
+		sf := fieldToStructFieldTmpl(fld, schema)
+		if binaryData {
+			sf.BinReadLines = binLoadAssignLines(fld, schema, "row", sf.Priv, sf.GoType)
+		}
+		fields = append(fields, sf)
 	}
 
 	var viewAs []viewAsGroupData
@@ -239,8 +245,10 @@ func appendTableDefinitions(buf *bytes.Buffer, tpl *template.Template, tname str
 
 	if len(groups) == 0 && len(indexes) == 0 {
 		if err := tpl.ExecuteTemplate(buf, "table_container_no_group", tableContainerNoGroupTmpl{
-			TableName: tname,
-			IDGoType:  idGo,
+			TableName:  tname,
+			IDGoType:   idGo,
+			Fields:     fields,
+			BinaryData: binaryData,
 		}); err != nil {
 			return err
 		}
@@ -348,6 +356,8 @@ func appendTableDefinitions(buf *bytes.Buffer, tpl *template.Template, tname str
 		if err := tpl.ExecuteTemplate(buf, "table_container_group", tableContainerGroupTmpl{
 			TableName:         tname,
 			IDGoType:          idGo,
+			Fields:            fields,
+			BinaryData:        binaryData,
 			GroupSlots:        slots,
 			IndexSlots:        idxSlots,
 			GetRowsMethods:    getRows,
