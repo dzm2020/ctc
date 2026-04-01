@@ -40,6 +40,8 @@ go build -o excel2json ./cmd/excel2json
 
 示例配置见 [`examples/excel2json.example.json`](examples/excel2json.example.json)。输入目录下需有含 `@Type` 与数据 sheet 的 `.xlsx`（可参考 `tables/Test.xlsx`）。
 
+流水线、包职责与合并规则见 **[docs/LOGIC.md](docs/LOGIC.md)**。
+
 ---
 
 ## 配置文件字段说明
