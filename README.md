@@ -31,54 +31,6 @@
 
 ---
 
-## Windows 发布包
-
-预置目录 **`release/windows/`**，包含：
-
-- `excel2json.exe`（需本地构建生成）
-- `excel2json.json` — 默认配置（`inputs`: `./tables`，输出 `./output/...`）
-- `run.bat` / `run.ps1` — 一键执行转换
-- `README-RELEASE.txt` — 使用说明
-- `tables/` — 放置 `.xlsx`
-
-**构建 exe 并打包 zip：**
-
-```bat
-scripts\build-windows-release.bat
-powershell -ExecutionPolicy Bypass -File scripts\zip-windows-release.ps1
-```
-
-得到 `release\ctc-excel2json-windows-amd64.zip`，可直接分发给策划（解压后把表放进 `tables` 再运行 `run.bat`）。
-
----
-
-## Linux 发布包
-
-预置目录 **`release/linux/`**（`GOOS=linux GOARCH=amd64`，`CGO_ENABLED=0`），包含：
-
-- `excel2json` — 可执行文件（无后缀）
-- `excel2json.json` — 与 Windows 包相同的默认配置
-- `run.sh` — `chmod +x run.sh excel2json && ./run.sh`
-- `README-RELEASE.txt` — 使用说明
-- `tables/` — 放置 `.xlsx`
-
-**在 Linux / macOS 上构建：**
-
-```bash
-chmod +x scripts/build-linux-release.sh
-./scripts/build-linux-release.sh
-./scripts/zip-linux-release.sh   # 得到 release/ctc-excel2json-linux-amd64.tar.gz
-```
-
-**在 Windows 上交叉编译：**
-
-```bat
-powershell -ExecutionPolicy Bypass -File scripts\build-linux-release.ps1
-powershell -ExecutionPolicy Bypass -File scripts\zip-linux-release.ps1
-```
-
----
-
 ## 快速开始
 
 ```bash
