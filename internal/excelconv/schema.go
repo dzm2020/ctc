@@ -8,23 +8,8 @@ const RowJSONIDKey = "id"
 // DefaultPrimaryKeyType 未在 @Type 中配置「主键」行时的默认主键类型。
 const DefaultPrimaryKeyType = "int64"
 
-// ExportTarget 与策划「筛选」列对应：C 客户端，S 服务端，CS 或未填表示双端。
-type ExportTarget int
-
-const (
-	ExportBoth ExportTarget = iota
-	ExportClient
-	ExportServer
-)
-
-// FieldFilter 表字段筛选。
+// FieldFilter @Type「筛选」列原文：逗号分隔标签，如 C,S；空表示全端；CS 兼容为双端。
 type FieldFilter string
-
-const (
-	FilterClient       FieldFilter = "C"
-	FilterServer       FieldFilter = "S"
-	FilterClientServer FieldFilter = "CS"
-)
 
 // Field 表字段（@Type 中「表头」行）。
 type Field struct {
@@ -98,16 +83,3 @@ func (s *Schema) registerEnumValue(enum, member string, v int) {
 	s.EnumValue[enum][member] = v
 }
 
-// FieldVisible 按导出目标判断是否导出该字段。
-func FieldVisible(f FieldFilter, t ExportTarget) bool {
-	switch f {
-	case FilterClient:
-		return t == ExportClient || t == ExportBoth
-	case FilterServer:
-		return t == ExportServer || t == ExportBoth
-	case FilterClientServer, "":
-		return true
-	default:
-		return true
-	}
-}

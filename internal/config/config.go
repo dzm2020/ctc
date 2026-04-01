@@ -12,7 +12,10 @@ type Config struct {
 	// Inputs 输入目录或 .xlsx 文件路径列表；目录会递归收集其中所有 .xlsx。至少一条且能解析出文件。
 	Inputs []string `json:"inputs"`
 	Output Output   `json:"output"`
-	// Target 导出目标：both | client | server（对应策划筛选 CS / C / S），默认 both。
+	// FilterTags 导出时使用的标签集合（如 C、S）；与 @Type「筛选」列中逗号分隔的标签求交集，有交集则导出该字段/成员。
+	// 非空时优先于 Target；省略或全为空元素时按 Target 推断（both→C+S）。
+	FilterTags []string `json:"filterTags"`
+	// Target 兼容旧配置：both | client | server；仅在 FilterTags 无效（未配置或可解析标签为空）时使用。
 	Target string `json:"target"`
 	// PrettyJSON 为 true 时 JSON 缩进格式化；省略则为 true。
 	PrettyJSON *bool `json:"prettyJson"`

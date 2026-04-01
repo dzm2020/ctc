@@ -6,6 +6,7 @@
 		"codePath": "output/gamedata",
 		"jsonPath": "output/json"
 	},
+	"filterTags": ["C", "S"],
 	"target": "both",
 	"prettyJson": true,
 	"goPackage": "gamedata",

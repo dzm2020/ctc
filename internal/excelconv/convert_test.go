@@ -29,7 +29,7 @@ func TestWallpaperSample(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	tables, err := ConvertWorkbook(f, schema, ExportBoth)
+	tables, err := ConvertWorkbook(f, schema, []string{"C", "S"})
 	if err != nil {
 		t.Fatal(err)
 	}

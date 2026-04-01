@@ -32,7 +32,7 @@ func main() {
 
 	jsonOut := cfg.JsonPathOrDefault()
 	goOut := cfg.CodePathOrDefault()
-	tgt, err := parseTarget(cfg.TargetOrDefault())
+	exportTags, err := excelconv.ResolveExportFilterTags(cfg.FilterTags, cfg.TargetOrDefault())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -59,7 +59,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "解析 @Type (%s): %v\n", xlsxPath, err)
 			os.Exit(1)
 		}
-		tables, err := excelconv.ConvertWorkbook(f, schema, tgt)
+		tables, err := excelconv.ConvertWorkbook(f, schema, exportTags)
 		_ = f.Close()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "转表 (%s): %v\n", xlsxPath, err)
@@ -71,7 +71,7 @@ func main() {
 		} else {
 			schemaMergedForKeys = excelconv.MergeSchemas([]*excelconv.Schema{schemaMergedForKeys, schema})
 		}
-		if err := excelconv.MergeTableMaps(mergedTables, tables, xlsxPath, schemaMergedForKeys, tgt); err != nil {
+		if err := excelconv.MergeTableMaps(mergedTables, tables, xlsxPath, schemaMergedForKeys, exportTags); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			os.Exit(1)
 		}
@@ -107,30 +107,17 @@ func main() {
 	if !cfg.SkipGo {
 		goOut = strings.TrimSpace(goOut)
 		if goOut != "" {
-			if err := gogen.WritePackage(goOut, goPkg, schemaMerged, tgt); err != nil {
+			if err := gogen.WritePackage(goOut, goPkg, schemaMerged, exportTags); err != nil {
 				fmt.Fprintf(os.Stderr, "生成 Go 包: %v\n", err)
 				os.Exit(1)
 			}
-			if err := gogen.GenerateBundle(goOut, goPkg, schemaMerged, tgt); err != nil {
+			if err := gogen.GenerateBundle(goOut, goPkg, schemaMerged, exportTags); err != nil {
 				fmt.Fprintf(os.Stderr, "生成 loader_gen.go: %v\n", err)
 				os.Exit(1)
 			}
 			fmt.Printf("已生成 Go 加载代码: %s (package %s)\n", goOut, goPkg)
 			fmt.Printf("  使用 LoadGameData(%q) 可一次加载 JSON 目录下的全部表\n", jsonOut)
 		}
-	}
-}
-
-func parseTarget(s string) (excelconv.ExportTarget, error) {
-	switch strings.ToLower(strings.TrimSpace(s)) {
-	case "both", "cs", "all":
-		return excelconv.ExportBoth, nil
-	case "client", "c":
-		return excelconv.ExportClient, nil
-	case "server", "s":
-		return excelconv.ExportServer, nil
-	default:
-		return 0, fmt.Errorf("配置 target 无效: %q（可选 both、client、server）", s)
 	}
 }
 

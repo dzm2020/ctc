@@ -23,9 +23,9 @@ func groupValueCtorName(tname, groupKey string) string {
 }
 
 // tableFileGroupColKeyImports 生成 row_group_key_str 拼 string 键时 tables_gen 额外需要的标准库（可比较分组用结构体键，不触发）。
-func tableFileGroupColKeyImports(schema *excelconv.Schema, target excelconv.ExportTarget) (needStrconv, needFmt bool) {
+func tableFileGroupColKeyImports(schema *excelconv.Schema, exportTags []string) (needStrconv, needFmt bool) {
 	for _, tname := range sortedTableKeys(schema.Tables) {
-		visible := visibleTableFields(schema.Tables[tname], target)
+		visible := visibleTableFields(schema.Tables[tname], exportTags)
 		for _, g := range excelconv.DistinctFieldGroups(visible) {
 			gf := excelconv.FieldsInGroup(visible, g)
 			if groupFieldsComparable(gf, schema) {
@@ -60,9 +60,9 @@ func tableFileGroupColKeyImports(schema *excelconv.Schema, target excelconv.Expo
 	return needStrconv, needFmt
 }
 
-func anyTableHasGroupsOrIndexes(schema *excelconv.Schema, target excelconv.ExportTarget) bool {
+func anyTableHasGroupsOrIndexes(schema *excelconv.Schema, exportTags []string) bool {
 	for _, tname := range sortedTableKeys(schema.Tables) {
-		visible := visibleTableFields(schema.Tables[tname], target)
+		visible := visibleTableFields(schema.Tables[tname], exportTags)
 		if len(excelconv.DistinctFieldGroups(visible)) > 0 || len(excelconv.DistinctFieldIndexes(visible)) > 0 {
 			return true
 		}

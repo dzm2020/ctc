@@ -113,12 +113,12 @@ type configStructTmpl struct {
 	Fields     []structFieldTmpl
 }
 
-func renderStructsFile(pkg string, snames []string, schema *excelconv.Schema, target excelconv.ExportTarget) (string, error) {
+func renderStructsFile(pkg string, snames []string, schema *excelconv.Schema, exportTags []string) (string, error) {
 	t := codegenRoot()
 	var buf bytes.Buffer
 	structNeedSlices := false
 	for _, sn := range snames {
-		if structFieldsNeedSlices(visibleStructFields(schema.Structs[sn], target)) {
+		if structFieldsNeedSlices(visibleStructFields(schema.Structs[sn], exportTags)) {
 			structNeedSlices = true
 			break
 		}
@@ -127,7 +127,7 @@ func renderStructsFile(pkg string, snames []string, schema *excelconv.Schema, ta
 		return "", err
 	}
 	for _, sn := range snames {
-		vis := visibleStructFields(schema.Structs[sn], target)
+		vis := visibleStructFields(schema.Structs[sn], exportTags)
 		fields := make([]structFieldTmpl, 0, len(vis))
 		for _, sf := range vis {
 			priv := privateFieldIdent(sf.Name)
@@ -272,26 +272,26 @@ func fieldToStructFieldTmpl(f excelconv.Field, schema *excelconv.Schema) structF
 	}
 }
 
-func renderTablesFile(pkg string, tnames []string, schema *excelconv.Schema, target excelconv.ExportTarget) (string, error) {
+func renderTablesFile(pkg string, tnames []string, schema *excelconv.Schema, exportTags []string) (string, error) {
 	t := codegenRoot()
 	var buf bytes.Buffer
 	needSlices := false
 	for _, tn := range tnames {
-		vis := visibleTableFields(schema.Tables[tn], target)
+		vis := visibleTableFields(schema.Tables[tn], exportTags)
 		if tableFieldsNeedSlices(vis) {
 			needSlices = true
 			break
 		}
 	}
-	hasLookup := anyTableHasGroupsOrIndexes(schema, target)
+	hasLookup := anyTableHasGroupsOrIndexes(schema, exportTags)
 	needStrconv, needFmt := false, false
 	if hasLookup {
-		needStrconv, needFmt = tableFileGroupColKeyImports(schema, target)
+		needStrconv, needFmt = tableFileGroupColKeyImports(schema, exportTags)
 	}
 	needStrings := false
 	queryStrconv := false
 	for _, tn := range tnames {
-		vis := visibleTableFields(schema.Tables[tn], target)
+		vis := visibleTableFields(schema.Tables[tn], exportTags)
 		for _, g := range excelconv.DistinctFieldGroups(vis) {
 			gf := excelconv.FieldsInGroup(vis, g)
 			comp := groupFieldsComparable(gf, schema)
@@ -335,7 +335,7 @@ func renderTablesFile(pkg string, tnames []string, schema *excelconv.Schema, tar
 	}
 
 	for _, tname := range tnames {
-		visible := visibleTableFields(schema.Tables[tname], target)
+		visible := visibleTableFields(schema.Tables[tname], exportTags)
 		emit := excelconv.RowStructEmitOrder(visible)
 
 		for _, p := range emit {

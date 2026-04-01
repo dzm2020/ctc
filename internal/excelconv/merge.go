@@ -125,16 +125,16 @@ func MergeSchemas(list []*Schema) *Schema {
 }
 
 // MergeTableMaps 将多张表合并到同一 map。同一表内主键 ID 已存在、或 @Type「索引」复合键冲突则报错。
-func MergeTableMaps(dst map[string]map[string]map[string]interface{}, src map[string]map[string]map[string]interface{}, srcFile string, schema *Schema, target ExportTarget) error {
+func MergeTableMaps(dst map[string]map[string]map[string]interface{}, src map[string]map[string]map[string]interface{}, srcFile string, schema *Schema, exportTags []string) error {
 	for tname, rows := range src {
 		if dst[tname] == nil {
 			dst[tname] = make(map[string]map[string]interface{})
 		}
-		seen, err := fillIndexSeenFromRows(dst[tname], tname, schema, target)
+		seen, err := fillIndexSeenFromRows(dst[tname], tname, schema, exportTags)
 		if err != nil {
 			return fmt.Errorf("%s: %w", srcFile, err)
 		}
-		vis := VisibleTableFields(schema.Tables[tname], target)
+		vis := VisibleTableFields(schema.Tables[tname], exportTags)
 		for id, row := range rows {
 			if _, exists := dst[tname][id]; exists {
 				return fmt.Errorf("表 %q 数据合并: 主键列值 %q 重复（与已加载数据冲突；当前文件: %s）", tname, id, srcFile)

@@ -11,7 +11,7 @@ import (
 
 
 // ConvertWorkbook 将工作簿中除 @Type 外、且在 Schema 中有表定义的 sheet 转为 map[表名][主键]行数据。
-func ConvertWorkbook(f *excelize.File, schema *Schema, target ExportTarget) (map[string]map[string]map[string]interface{}, error) {
+func ConvertWorkbook(f *excelize.File, schema *Schema, exportTags []string) (map[string]map[string]map[string]interface{}, error) {
 	out := make(map[string]map[string]map[string]interface{})
 	for _, name := range f.GetSheetList() {
 		if name == typeSheetName {
@@ -20,7 +20,7 @@ func ConvertWorkbook(f *excelize.File, schema *Schema, target ExportTarget) (map
 		if _, ok := schema.Tables[name]; !ok {
 			continue
 		}
-		m, err := convertDataSheet(f, name, schema, target)
+		m, err := convertDataSheet(f, name, schema, exportTags)
 		if err != nil {
 			return nil, fmt.Errorf("sheet %q: %w", name, err)
 		}
@@ -29,7 +29,7 @@ func ConvertWorkbook(f *excelize.File, schema *Schema, target ExportTarget) (map
 	return out, nil
 }
 
-func convertDataSheet(f *excelize.File, sheet string, schema *Schema, target ExportTarget) (map[string]map[string]interface{}, error) {
+func convertDataSheet(f *excelize.File, sheet string, schema *Schema, exportTags []string) (map[string]map[string]interface{}, error) {
 	rows, err := f.GetRows(sheet)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func convertDataSheet(f *excelize.File, sheet string, schema *Schema, target Exp
 	}
 
 	fields := schema.Tables[sheet]
-	visible := VisibleTableFields(fields, target)
+	visible := VisibleTableFields(fields, exportTags)
 	fieldByName := make(map[string]Field, len(fields))
 	for _, fld := range fields {
 		fieldByName[fld.Name] = fld
@@ -111,7 +111,7 @@ func convertDataSheet(f *excelize.File, sheet string, schema *Schema, target Exp
 			if !ok {
 				continue
 			}
-			if !FieldVisible(fld.Filter, target) {
+			if !FieldVisible(fld.Filter, exportTags) {
 				continue
 			}
 			cell := ""

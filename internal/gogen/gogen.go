@@ -15,7 +15,7 @@ import (
 //   - structs_gen.go（templates/structs.tmpl）
 //   - tables_gen.go（templates/tables.tmpl）
 // loader_gen.go 由 GenerateBundle 单独写出（templates/loader.tmpl）。
-func WritePackage(dir, pkg string, schema *excelconv.Schema, target excelconv.ExportTarget) error {
+func WritePackage(dir, pkg string, schema *excelconv.Schema, exportTags []string) error {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func WritePackage(dir, pkg string, schema *excelconv.Schema, target excelconv.Ex
 	}
 	sort.Strings(snames)
 	if len(snames) > 0 {
-		src, err := renderStructsFile(pkg, snames, schema, target)
+		src, err := renderStructsFile(pkg, snames, schema, exportTags)
 		if err != nil {
 			return fmt.Errorf("structs template: %w", err)
 		}
@@ -55,7 +55,7 @@ func WritePackage(dir, pkg string, schema *excelconv.Schema, target excelconv.Ex
 
 	tkeys := sortedTableKeys(schema.Tables)
 	if len(tkeys) > 0 {
-		src, err := renderTablesFile(pkg, tkeys, schema, target)
+		src, err := renderTablesFile(pkg, tkeys, schema, exportTags)
 		if err != nil {
 			return fmt.Errorf("tables template: %w", err)
 		}
@@ -83,14 +83,14 @@ func WritePackage(dir, pkg string, schema *excelconv.Schema, target excelconv.Ex
 	return nil
 }
 
-func visibleTableFields(fields []excelconv.Field, target excelconv.ExportTarget) []excelconv.Field {
-	return excelconv.VisibleTableFields(fields, target)
+func visibleTableFields(fields []excelconv.Field, exportTags []string) []excelconv.Field {
+	return excelconv.VisibleTableFields(fields, exportTags)
 }
 
-func visibleStructFields(fields []excelconv.StructField, target excelconv.ExportTarget) []excelconv.StructField {
+func visibleStructFields(fields []excelconv.StructField, exportTags []string) []excelconv.StructField {
 	var v []excelconv.StructField
 	for _, sf := range fields {
-		if !excelconv.FieldVisible(sf.Filter, target) {
+		if !excelconv.FieldVisible(sf.Filter, exportTags) {
 			continue
 		}
 		v = append(v, sf)
@@ -128,7 +128,7 @@ func tableRowPrimaryKeyGoType(schema *excelconv.Schema, table string) string {
 }
 
 // GenerateBundle 写出 GameData 与 LoadGameData（jsonDir 应与 excel2json -out 一致）。
-func GenerateBundle(dir, pkg string, schema *excelconv.Schema, _ excelconv.ExportTarget) error {
+func GenerateBundle(dir, pkg string, schema *excelconv.Schema, _ []string) error {
 	var tnames []string
 	for n := range schema.Tables {
 		tnames = append(tnames, n)

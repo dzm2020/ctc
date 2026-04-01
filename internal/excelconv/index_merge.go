@@ -1,8 +1,8 @@
 package excelconv
 
 // fillIndexSeenFromRows 从已有行收集各「索引」已出现的复合键；若表内已有重复键则报错。
-func fillIndexSeenFromRows(rows map[string]map[string]interface{}, table string, schema *Schema, target ExportTarget) (map[string]map[string]indexSeenEntry, error) {
-	visible := VisibleTableFields(schema.Tables[table], target)
+func fillIndexSeenFromRows(rows map[string]map[string]interface{}, table string, schema *Schema, exportTags []string) (map[string]map[string]indexSeenEntry, error) {
+	visible := VisibleTableFields(schema.Tables[table], exportTags)
 	seen := make(map[string]map[string]indexSeenEntry)
 	for _, ix := range DistinctFieldIndexes(visible) {
 		seen[ix] = make(map[string]indexSeenEntry)
