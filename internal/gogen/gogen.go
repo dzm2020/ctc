@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"ctc/internal/excelconv"
 )
@@ -85,17 +84,7 @@ func WritePackage(dir, pkg string, schema *excelconv.Schema, target excelconv.Ex
 }
 
 func visibleTableFields(fields []excelconv.Field, target excelconv.ExportTarget) []excelconv.Field {
-	var v []excelconv.Field
-	for _, fld := range fields {
-		if !excelconv.FieldVisible(fld.Filter, target) {
-			continue
-		}
-		if strings.EqualFold(fld.Name, excelconv.RowJSONIDKey) {
-			continue
-		}
-		v = append(v, fld)
-	}
-	return v
+	return excelconv.VisibleTableFields(fields, target)
 }
 
 func visibleStructFields(fields []excelconv.StructField, target excelconv.ExportTarget) []excelconv.StructField {

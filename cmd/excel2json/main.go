@@ -46,6 +46,7 @@ func main() {
 
 	mergedTables := make(map[string]map[string]map[string]interface{})
 	var schemas []*excelconv.Schema
+	var schemaMergedForKeys *excelconv.Schema
 	for _, xlsxPath := range files {
 		f, err := excelize.OpenFile(xlsxPath)
 		if err != nil {
@@ -65,7 +66,12 @@ func main() {
 			os.Exit(1)
 		}
 		schemas = append(schemas, schema)
-		if err := excelconv.MergeTableMaps(mergedTables, tables, xlsxPath); err != nil {
+		if schemaMergedForKeys == nil {
+			schemaMergedForKeys = schema
+		} else {
+			schemaMergedForKeys = excelconv.MergeSchemas([]*excelconv.Schema{schemaMergedForKeys, schema})
+		}
+		if err := excelconv.MergeTableMaps(mergedTables, tables, xlsxPath, schemaMergedForKeys, tgt); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			os.Exit(1)
 		}

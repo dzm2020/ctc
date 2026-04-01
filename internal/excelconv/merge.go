@@ -124,15 +124,25 @@ func MergeSchemas(list []*Schema) *Schema {
 	return out
 }
 
-// MergeTableMaps 将多张表合并到同一 map。同一表内主键 ID 已存在则报错（srcFile 用于错误信息）。
-func MergeTableMaps(dst map[string]map[string]map[string]interface{}, src map[string]map[string]map[string]interface{}, srcFile string) error {
+// MergeTableMaps 将多张表合并到同一 map。同一表内主键 ID 已存在、或 @Type「索引」复合键冲突则报错。
+func MergeTableMaps(dst map[string]map[string]map[string]interface{}, src map[string]map[string]map[string]interface{}, srcFile string, schema *Schema, target ExportTarget) error {
 	for tname, rows := range src {
 		if dst[tname] == nil {
 			dst[tname] = make(map[string]map[string]interface{})
 		}
+		seen, err := fillIndexSeenFromRows(dst[tname], tname, schema, target)
+		if err != nil {
+			return fmt.Errorf("%s: %w", srcFile, err)
+		}
+		vis := VisibleTableFields(schema.Tables[tname], target)
 		for id, row := range rows {
 			if _, exists := dst[tname][id]; exists {
 				return fmt.Errorf("表 %q 主键 %q 合并冲突（已由其他 xlsx 加载，当前: %s）", tname, id, srcFile)
+			}
+			if len(seen) > 0 {
+				if err := addRecordToIndexSeen(row, vis, schema, seen, tname); err != nil {
+					return fmt.Errorf("表 %q 主键 %q（当前: %s）: %w", tname, id, srcFile, err)
+				}
 			}
 			dst[tname][id] = row
 		}

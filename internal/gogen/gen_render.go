@@ -166,6 +166,7 @@ type nestedGroupTmpl struct {
 	TypeName  string
 	TableName string
 	GroupKey  string
+	IsIndex   bool
 	Fields    []structFieldTmpl
 }
 
@@ -175,6 +176,7 @@ type groupValueCtorTmpl struct {
 	GroupType  string
 	ParamList  string
 	CtorFields []struct{ Priv, Param string }
+	ForIndex   bool
 }
 
 type rowGroupKeyStrTmpl struct {
@@ -182,6 +184,7 @@ type rowGroupKeyStrTmpl struct {
 	TableName string
 	GroupKey  string
 	KeyParts  []string
+	ForIndex  bool
 }
 
 type viewAsGroupData struct {
@@ -191,12 +194,13 @@ type viewAsGroupData struct {
 }
 
 type tableRowTmpl struct {
-	TableName    string
-	IDGoType     string
-	IDJSONKey    string
-	AuxName      string
-	Fields       []structFieldTmpl
-	ViewAsGroups []viewAsGroupData
+	TableName     string
+	IDGoType      string
+	IDJSONKey     string
+	AuxName       string
+	Fields        []structFieldTmpl
+	ViewAsGroups  []viewAsGroupData
+	ViewAsIndexes []viewAsGroupData
 }
 
 type tableContainerNoGroupTmpl struct {
@@ -225,11 +229,34 @@ type getRowsMethodTmpl struct {
 	KeyJoinElts  []string
 }
 
+type tableIndexSlotTmpl struct {
+	MapSuffix   string
+	IndexName   string
+	IndexType   string
+	Comparable  bool
+	VarName     string
+	RowKeyCall  string
+}
+
+type getByIndexMethodTmpl struct {
+	MethodName   string
+	MapSuffix    string
+	CtorName     string
+	ParamList    string
+	QueryArgList string
+	Comparable   bool
+	N            int
+	ParseLines   []string
+	KeyJoinElts  []string
+}
+
 type tableContainerGroupTmpl struct {
-	TableName      string
-	IDGoType       string
-	GroupSlots     []tableGroupSlotTmpl
-	GetRowsMethods []getRowsMethodTmpl
+	TableName         string
+	IDGoType          string
+	GroupSlots        []tableGroupSlotTmpl
+	IndexSlots        []tableIndexSlotTmpl
+	GetRowsMethods    []getRowsMethodTmpl
+	GetByIndexMethods []getByIndexMethodTmpl
 }
 
 func fieldToStructFieldTmpl(f excelconv.Field, schema *excelconv.Schema) structFieldTmpl {
@@ -256,9 +283,9 @@ func renderTablesFile(pkg string, tnames []string, schema *excelconv.Schema, tar
 			break
 		}
 	}
-	hasFG := anyTableHasFieldGroups(schema, target)
+	hasLookup := anyTableHasGroupsOrIndexes(schema, target)
 	needStrconv, needFmt := false, false
-	if hasFG {
+	if hasLookup {
 		needStrconv, needFmt = tableFileGroupColKeyImports(schema, target)
 	}
 	needStrings := false
@@ -279,6 +306,20 @@ func renderTablesFile(pkg string, tnames []string, schema *excelconv.Schema, tar
 				}
 			}
 		}
+		for _, ix := range excelconv.DistinctFieldIndexes(vis) {
+			gf := excelconv.FieldsInIndex(vis, ix)
+			comp := groupFieldsComparable(gf, schema)
+			if !comp {
+				needStrings = true
+				qc := buildGroupQuerySwitch(
+					ix, gf, schema,
+					privateFieldIdent(ix), tableIndexTypeIdent(tn, ix), false,
+				)
+				if qc.QueryNeedsStrconv() {
+					queryStrconv = true
+				}
+			}
+		}
 	}
 	if queryStrconv {
 		needStrconv = true
@@ -288,7 +329,7 @@ func renderTablesFile(pkg string, tnames []string, schema *excelconv.Schema, tar
 		NeedSlices:       needSlices,
 		NeedFmt:          needFmt,
 		NeedStrconv:      needStrconv,
-		NeedGroupStrings: hasFG && needStrings,
+		NeedGroupStrings: hasLookup && needStrings,
 	}); err != nil {
 		return "", err
 	}
@@ -311,6 +352,25 @@ func renderTablesFile(pkg string, tnames []string, schema *excelconv.Schema, tar
 				TypeName:  typ,
 				TableName: tname,
 				GroupKey:  p.Group,
+				IsIndex:   false,
+				Fields:    fields,
+			}); err != nil {
+				return "", err
+			}
+		}
+		indexes := excelconv.DistinctFieldIndexes(visible)
+		for _, ix := range indexes {
+			gf := excelconv.FieldsInIndex(visible, ix)
+			typ := tableIndexTypeIdent(tname, ix)
+			fields := make([]structFieldTmpl, 0, len(gf))
+			for _, fld := range gf {
+				fields = append(fields, fieldToStructFieldTmpl(fld, schema))
+			}
+			if err := t.ExecuteTemplate(&buf, "nested_group", nestedGroupTmpl{
+				TypeName:  typ,
+				TableName: tname,
+				GroupKey:  ix,
+				IsIndex:   true,
 				Fields:    fields,
 			}); err != nil {
 				return "", err
@@ -337,14 +397,27 @@ func renderTablesFile(pkg string, tnames []string, schema *excelconv.Schema, tar
 			}
 			viewAs = append(viewAs, viewAsGroupData{Method: mth, GroupType: gTyp, Assignments: asgn})
 		}
+		ni := len(indexes)
+		var viewIdx []viewAsGroupData
+		for _, ix := range indexes {
+			iTyp := tableIndexTypeIdent(tname, ix)
+			mth := viewAsIndexMethodName(ix, ni)
+			gf := excelconv.FieldsInIndex(visible, ix)
+			var asgn []struct{ Priv string }
+			for _, fld := range gf {
+				asgn = append(asgn, struct{ Priv string }{Priv: privateFieldIdent(fld.Name)})
+			}
+			viewIdx = append(viewIdx, viewAsGroupData{Method: mth, GroupType: iTyp, Assignments: asgn})
+		}
 
 		if err := t.ExecuteTemplate(&buf, "table_row", tableRowTmpl{
-			TableName:    tname,
-			IDGoType:     idGo,
-			IDJSONKey:    excelconv.RowJSONIDKey,
-			AuxName:      rowJSONAuxTypeName(tname),
-			Fields:       fields,
-			ViewAsGroups: viewAs,
+			TableName:     tname,
+			IDGoType:      idGo,
+			IDJSONKey:     excelconv.RowJSONIDKey,
+			AuxName:       rowJSONAuxTypeName(tname),
+			Fields:        fields,
+			ViewAsGroups:  viewAs,
+			ViewAsIndexes: viewIdx,
 		}); err != nil {
 			return "", err
 		}
@@ -367,6 +440,7 @@ func renderTablesFile(pkg string, tnames []string, schema *excelconv.Schema, tar
 					GroupType:  gtyp,
 					ParamList:  pl,
 					CtorFields: cf,
+					ForIndex:   false,
 				}); err != nil {
 					return "", err
 				}
@@ -382,13 +456,53 @@ func renderTablesFile(pkg string, tnames []string, schema *excelconv.Schema, tar
 					TableName: tname,
 					GroupKey:  g,
 					KeyParts:  parts,
+					ForIndex:  false,
+				}); err != nil {
+					return "", err
+				}
+			}
+		}
+		for _, ix := range indexes {
+			gf := excelconv.FieldsInIndex(visible, ix)
+			ityp := tableIndexTypeIdent(tname, ix)
+			comp := groupFieldsComparable(gf, schema)
+			if comp {
+				pl, _ := buildGroupParamAndArgLists(gf, schema)
+				var cf []struct{ Priv, Param string }
+				for _, fld := range gf {
+					p := privateFieldIdent(fld.Name)
+					cf = append(cf, struct{ Priv, Param string }{Priv: p, Param: p})
+				}
+				if err := t.ExecuteTemplate(&buf, "group_value_ctor", groupValueCtorTmpl{
+					CtorName:   groupValueCtorName(tname, ix),
+					GroupKey:   ix,
+					GroupType:  ityp,
+					ParamList:  pl,
+					CtorFields: cf,
+					ForIndex:   true,
+				}); err != nil {
+					return "", err
+				}
+			} else {
+				fn := rowIndexKeyStrFuncName(tname, ix)
+				parts := make([]string, 0, len(gf))
+				for _, fld := range gf {
+					part, _, _ := goGroupKeyPartExpr(fld, schema, "r")
+					parts = append(parts, part)
+				}
+				if err := t.ExecuteTemplate(&buf, "row_group_key_str", rowGroupKeyStrTmpl{
+					FuncName:  fn,
+					TableName: tname,
+					GroupKey:  ix,
+					KeyParts:  parts,
+					ForIndex:  true,
 				}); err != nil {
 					return "", err
 				}
 			}
 		}
 
-		if len(groups) == 0 {
+		if len(groups) == 0 && len(indexes) == 0 {
 			if err := t.ExecuteTemplate(&buf, "table_container_no_group", tableContainerNoGroupTmpl{
 				TableName: tname,
 				IDGoType:  idGo,
@@ -446,11 +560,63 @@ func renderTablesFile(pkg string, tnames []string, schema *excelconv.Schema, tar
 					})
 				}
 			}
+			ni := len(indexes)
+			var idxSlots []tableIndexSlotTmpl
+			var getByIdx []getByIndexMethodTmpl
+			for j, ix := range indexes {
+				gf := excelconv.FieldsInIndex(visible, ix)
+				suff := privateFieldIdent(ix)
+				ityp := tableIndexTypeIdent(tname, ix)
+				comp := groupFieldsComparable(gf, schema)
+				ctor := groupValueCtorName(tname, ix)
+				var rkc string
+				if comp {
+					rkc = buildRowKeyCall(ctor, gf)
+				} else {
+					rkc = rowIndexKeyStrFuncName(tname, ix) + "(row)"
+				}
+				idxSlots = append(idxSlots, tableIndexSlotTmpl{
+					MapSuffix:  suff,
+					IndexName:  ix,
+					IndexType:  ityp,
+					Comparable: comp,
+					VarName:    indexSlotVarName(j),
+					RowKeyCall: rkc,
+				})
+				imn := "GetByIndex_" + suff
+				if ni == 1 {
+					imn = "GetByIndexKey"
+				}
+				if comp {
+					pl, al := buildGroupParamAndArgLists(gf, schema)
+					getByIdx = append(getByIdx, getByIndexMethodTmpl{
+						MethodName:   imn,
+						MapSuffix:    suff,
+						CtorName:     ctor,
+						ParamList:    pl,
+						QueryArgList: al,
+						Comparable:   true,
+					})
+				} else {
+					qc := buildGroupQuerySwitch(ix, gf, schema, suff, ityp, false)
+					getByIdx = append(getByIdx, getByIndexMethodTmpl{
+						MethodName:  imn,
+						MapSuffix:   suff,
+						CtorName:    "",
+						Comparable:  false,
+						N:           qc.N,
+						ParseLines:  qc.ParseLines,
+						KeyJoinElts: qc.KeyJoinElts,
+					})
+				}
+			}
 			if err := t.ExecuteTemplate(&buf, "table_container_group", tableContainerGroupTmpl{
-				TableName:      tname,
-				IDGoType:       idGo,
-				GroupSlots:     slots,
-				GetRowsMethods: getRows,
+				TableName:         tname,
+				IDGoType:          idGo,
+				GroupSlots:        slots,
+				IndexSlots:        idxSlots,
+				GetRowsMethods:    getRows,
+				GetByIndexMethods: getByIdx,
 			}); err != nil {
 				return "", err
 			}
@@ -462,6 +628,11 @@ func renderTablesFile(pkg string, tnames []string, schema *excelconv.Schema, tar
 
 func indexVarName(i int) string {
 	const prefix = "kg"
+	return prefix + itoaSmall(i)
+}
+
+func indexSlotVarName(i int) string {
+	const prefix = "ik"
 	return prefix + itoaSmall(i)
 }
 

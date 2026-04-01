@@ -43,9 +43,14 @@ func convertDataSheet(f *excelize.File, sheet string, schema *Schema, target Exp
 	}
 
 	fields := schema.Tables[sheet]
+	visible := VisibleTableFields(fields, target)
 	fieldByName := make(map[string]Field, len(fields))
 	for _, fld := range fields {
 		fieldByName[fld.Name] = fld
+	}
+	indexSeen := make(map[string]map[string]struct{})
+	for _, ix := range DistinctFieldIndexes(visible) {
+		indexSeen[ix] = make(map[string]struct{})
 	}
 
 	colNames := make([]string, len(header))
@@ -108,8 +113,13 @@ func convertDataSheet(f *excelize.File, sheet string, schema *Schema, target Exp
 			if err != nil {
 				return nil, fmt.Errorf("行 %d 列 %q: %w", ridx+1, name, err)
 			}
-			// JSON 始终扁平：字段名即列名，不参与 @Type「分组」嵌套。
+			// JSON 始终扁平：字段名即列名，不参与 @Type「分组/索引」嵌套。
 			rec[fld.Name] = val
+		}
+		if len(indexSeen) > 0 {
+			if err := addRecordToIndexSeen(rec, visible, schema, indexSeen, sheet); err != nil {
+				return nil, fmt.Errorf("表 %q 行 %d: %w", sheet, ridx+1, err)
+			}
 		}
 		result[key] = rec
 	}

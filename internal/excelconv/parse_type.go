@@ -12,6 +12,9 @@ const typeSheetName = "@Type"
 
 var typeHeader = []string{"种类", "对象类型", "中文描述", "字段名", "字段类型", "数组切割", "默认值", "筛选", "分组"}
 
+// typeHeaderIndexName @Type 表头中可选列「索引」，与「分组」列一样可位于第 9 列及之后任意位置。
+const typeHeaderIndexName = "索引"
+
 // ParseTypeSheet 解析名为 @Type 的 sheet。
 func ParseTypeSheet(f *excelize.File) (*Schema, error) {
 	rows, err := f.GetRows(typeSheetName)
@@ -26,9 +29,13 @@ func ParseTypeSheet(f *excelize.File) (*Schema, error) {
 		return nil, fmt.Errorf("@Type 第一行表头不匹配，期望前 8 列为 %v 得到 %v", typeHeader[:8], h0)
 	}
 	groupCol := groupColumnIndex(h0)
+	indexCol := indexColumnIndex(h0)
 	rowPadLen := 8
-	if groupCol >= 0 {
+	if groupCol >= 0 && groupCol+1 > rowPadLen {
 		rowPadLen = groupCol + 1
+	}
+	if indexCol >= 0 && indexCol+1 > rowPadLen {
+		rowPadLen = indexCol + 1
 	}
 
 	s := NewSchema()
@@ -46,10 +53,17 @@ func ParseTypeSheet(f *excelize.File) (*Schema, error) {
 			}
 			grp := ""
 			if groupCol >= 0 {
-				grp = readTypeSheetGroupCell(f, groupCol, i)
+				grp = readTypeSheetCellAt(f, groupCol, i)
 			}
 			if grp == "" {
 				grp = cellAt(row, groupCol)
+			}
+			idx := ""
+			if indexCol >= 0 {
+				idx = readTypeSheetCellAt(f, indexCol, i)
+			}
+			if idx == "" {
+				idx = cellAt(row, indexCol)
 			}
 			fld := Field{
 				Table:      tbl,
@@ -60,6 +74,7 @@ func ParseTypeSheet(f *excelize.File) (*Schema, error) {
 				Default:    strings.TrimSpace(row[6]),
 				Filter:     FieldFilter(strings.TrimSpace(row[7])),
 				Group:      grp,
+				Index:      idx,
 			}
 			if fld.Name == "" || fld.Type == "" {
 				return nil, fmt.Errorf("@Type 第 %d 行: 表 %s 字段名或类型为空", i+1, tbl)
@@ -127,6 +142,11 @@ func ParseTypeSheet(f *excelize.File) (*Schema, error) {
 			return nil, fmt.Errorf("@Type 第 %d 行: 未知种类 %q", i+1, kind)
 		}
 	}
+	for tname, fields := range s.Tables {
+		if err := ValidateGroupIndexNamesDisjoint(tname, fields); err != nil {
+			return nil, err
+		}
+	}
 	return s, nil
 }
 
@@ -152,17 +172,27 @@ func groupColumnIndex(header []string) int {
 	return -1
 }
 
+// indexColumnIndex 在表头行中查找列名「索引」的下标；未找到返回 -1。
+func indexColumnIndex(header []string) int {
+	for i, c := range header {
+		if typeHeaderCellMatch(c, typeHeaderIndexName) {
+			return i
+		}
+	}
+	return -1
+}
+
 func typeHeaderCellMatch(cell, want string) bool {
 	t := strings.TrimSpace(strings.ReplaceAll(cell, "\u00a0", ""))
 	return t == strings.TrimSpace(want)
 }
 
-// readTypeSheetGroupCell 用工作表坐标读「分组」列，合并单元格时与 Excel 一致（GetRows 常为从格空）。
-func readTypeSheetGroupCell(f *excelize.File, groupCol, rowIndexInRows int) string {
-	if f == nil || groupCol < 0 {
+// readTypeSheetCellAt 用工作表坐标读 @Type 的某一列（分组、索引等），合并单元格时与 Excel 一致。
+func readTypeSheetCellAt(f *excelize.File, colIndex0, rowIndexInRows int) string {
+	if f == nil || colIndex0 < 0 {
 		return ""
 	}
-	col, err := excelize.ColumnNumberToName(groupCol + 1)
+	col, err := excelize.ColumnNumberToName(colIndex0 + 1)
 	if err != nil {
 		return ""
 	}

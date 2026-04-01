@@ -35,7 +35,8 @@ type Field struct {
 	ArraySplit string
 	Default    string
 	Filter     FieldFilter
-	Group      string // 分组：用于 Go 行视图 / Table.GetRowsByGroupKey；导出的 JSON 仍为扁平字段
+	Group      string // 分组：用于 Go 行视图 / Table 按组查询；导出的 JSON 仍为扁平字段
+	Index      string // 索引：多列组成复合键，表内不可重复；JSON 仍为扁平
 }
 
 // EnumMember 枚举成员。

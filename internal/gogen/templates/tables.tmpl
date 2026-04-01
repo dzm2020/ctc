@@ -14,7 +14,7 @@ import (
 {{end}}
 
 {{define "nested_group"}}{{with .}}
-// {{.TypeName}} 表 {{printf "%q" .TableName}} 分组 {{printf "%q" .GroupKey}}（由行扁平字段组装的视图，JSON 中无此嵌套）。
+// {{.TypeName}} 表 {{printf "%q" .TableName}} {{if .IsIndex}}索引{{else}}分组{{end}} {{printf "%q" .GroupKey}}（由行扁平字段组装的视图，JSON 中无此嵌套）。
 type {{.TypeName}} struct {
 {{- range .Fields}}
 	{{.Priv}} {{.GoType}}
@@ -33,7 +33,7 @@ func (g *{{$.TypeName}}) {{.Getter}}() {{.GoType}} {
 {{- end}}{{end}}
 {{end}}{{end}}
 
-{{define "group_value_ctor"}}// {{.CtorName}} 构造 @Type 分组 {{printf "%q" .GroupKey}} 的 map 键（形参与组内字段顺序、类型一致）。
+{{define "group_value_ctor"}}// {{.CtorName}} 构造 @Type {{if .ForIndex}}索引{{else}}分组{{end}} {{printf "%q" .GroupKey}} 的 map 键（形参与组内字段顺序、类型一致）。
 func {{.CtorName}}({{.ParamList}}) {{.GroupType}} {
 	return {{.GroupType}}{
 {{- range .CtorFields}}
@@ -44,7 +44,7 @@ func {{.CtorName}}({{.ParamList}}) {{.GroupType}} {
 
 {{end}}
 
-{{define "row_group_key_str"}}// {{.FuncName}} 由 @Type 分组 {{printf "%q" .GroupKey}} 从行拼 string 键（字段含切片等不可比较类型时）。
+{{define "row_group_key_str"}}// {{.FuncName}} 由 @Type {{if .ForIndex}}索引{{else}}分组{{end}} {{printf "%q" .GroupKey}} 从行拼 string 键（字段含切片等不可比较类型时）。
 func {{.FuncName}}(r *{{.TableName}}Row) string {
 	return strings.Join([]string{
 {{- range .KeyParts}}
@@ -56,7 +56,7 @@ func {{.FuncName}}(r *{{.TableName}}Row) string {
 {{end}}
 
 {{define "table_row"}}{{with .}}
-// {{.TableName}}Row 对应表 {{printf "%q" .TableName}} 的一行（JSON 扁平；@Type「分组」用于行视图与 Table.GetRowsByGroupKey）。
+// {{.TableName}}Row 对应表 {{printf "%q" .TableName}} 的一行（JSON 扁平；@Type「分组/索引」用于行视图与 Table 查询）。
 type {{.TableName}}Row struct {
 	id {{.IDGoType}}
 {{- range .Fields}}
@@ -107,6 +107,16 @@ func (r *{{$.TableName}}Row) {{.Method}}() {{.GroupType}} {
 	}
 }
 {{- end}}
+{{- range .ViewAsIndexes}}
+
+func (r *{{$.TableName}}Row) {{.Method}}() {{.GroupType}} {
+	return {{.GroupType}}{
+{{- range .Assignments}}
+		{{.Priv}}: r.{{.Priv}},
+{{- end}}
+	}
+}
+{{- end}}
 {{end}}{{end}}
 
 {{define "table_container_no_group"}}{{with .}}
@@ -143,7 +153,7 @@ func (r *{{.TableName}}Table) Index(idx int) *{{.TableName}}Row {
 	return r.list[idx]
 }
 
-func (r *{{.TableName}}Table) Range(f func(*{{.TableName}}Row) bool) {
+func (r *{{.TableName}}Table) ForEach(f func(*{{.TableName}}Row) bool) {
 	for _, row := range r.dict {
 		if !f(row) {
 			return
@@ -151,7 +161,7 @@ func (r *{{.TableName}}Table) Range(f func(*{{.TableName}}Row) bool) {
 	}
 }
 
-func (r *{{.TableName}}Table) SeqRange(f func(*{{.TableName}}Row) bool) {
+func (r *{{.TableName}}Table) ForEachOrdered(f func(*{{.TableName}}Row) bool) {
 	for _, row := range r.list {
 		if !f(row) {
 			return
@@ -172,6 +182,9 @@ type {{.TableName}}Table struct {
 {{- range .GroupSlots}}
 	byGroup_{{.MapSuffix}} map[{{if .Comparable}}{{.GroupType}}{{else}}string{{end}}][]*{{$.TableName}}Row // @Type 分组 {{printf "%q" .GroupName}}
 {{- end}}
+{{- range .IndexSlots}}
+	byIndex_{{.MapSuffix}} map[{{if .Comparable}}{{.IndexType}}{{else}}string{{end}}]*{{$.TableName}}Row // @Type 索引 {{printf "%q" .IndexName}}（复合键唯一）
+{{- end}}
 }
 
 func (r *{{.TableName}}Table) load(path string) error {
@@ -189,10 +202,17 @@ func (r *{{.TableName}}Table) load(path string) error {
 {{- range .GroupSlots}}
 	r.byGroup_{{.MapSuffix}} = make(map[{{if .Comparable}}{{.GroupType}}{{else}}string{{end}}][]*{{$.TableName}}Row)
 {{- end}}
+{{- range .IndexSlots}}
+	r.byIndex_{{.MapSuffix}} = make(map[{{if .Comparable}}{{.IndexType}}{{else}}string{{end}}]*{{$.TableName}}Row)
+{{- end}}
 	for _, row := range r.list {
 {{- range .GroupSlots}}
 		{{.VarName}} := {{.RowKeyCall}}
 		r.byGroup_{{.MapSuffix}}[{{.VarName}}] = append(r.byGroup_{{.MapSuffix}}[{{.VarName}}], row)
+{{- end}}
+{{- range .IndexSlots}}
+		{{.VarName}} := {{.RowKeyCall}}
+		r.byIndex_{{.MapSuffix}}[{{.VarName}}] = row
 {{- end}}
 	}
 	return nil
@@ -220,6 +240,32 @@ func (r *{{$.TableName}}Table) {{.MethodName}}(keyParts ...string) []*{{$.TableN
 {{- end}}
 	}, "\u001e")
 	return r.byGroup_{{.MapSuffix}}[k]
+}
+{{- end}}
+{{- end}}
+
+{{- range .GetByIndexMethods}}
+{{- if .Comparable}}
+// {{.MethodName}} 按 @Type 索引查询单行（形参顺序、类型与 {{.CtorName}} 一致；复合键表内唯一）。
+func (r *{{$.TableName}}Table) {{.MethodName}}({{.ParamList}}) *{{$.TableName}}Row {
+	k := {{.CtorName}}({{.QueryArgList}})
+	return r.byIndex_{{.MapSuffix}}[k]
+}
+{{- else}}
+// {{.MethodName}} 按 @Type 索引查询单行（不可比较字段：keyParts 与 rowIndexKeyStr 分段规则一致）。
+func (r *{{$.TableName}}Table) {{.MethodName}}(keyParts ...string) *{{$.TableName}}Row {
+	if len(keyParts) < {{.N}} {
+		return nil
+	}
+{{- range .ParseLines}}
+	{{.}}
+{{- end}}
+	k := strings.Join([]string{
+{{- range .KeyJoinElts}}
+		{{.}},
+{{- end}}
+	}, "\u001e")
+	return r.byIndex_{{.MapSuffix}}[k]
 }
 {{- end}}
 {{- end}}

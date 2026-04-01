@@ -12,6 +12,11 @@ func rowGroupKeyStrFuncName(tname, groupKey string) string {
 	return "rowGroupKeyStr_" + tname + "_" + privateFieldIdent(groupKey)
 }
 
+// rowIndexKeyStrFuncName 索引字段含不可比较类型时，从行拼 string 键的函数名。
+func rowIndexKeyStrFuncName(tname, indexKey string) string {
+	return "rowIndexKeyStr_" + tname + "_" + privateFieldIdent(indexKey)
+}
+
 // groupValueCtorName 分组键构造函数：<表名>_<分组标识>，形参与组内字段顺序、类型一致（导出函数）。
 func groupValueCtorName(tname, groupKey string) string {
 	return tname + "_" + privateFieldIdent(groupKey)
@@ -36,14 +41,29 @@ func tableFileGroupColKeyImports(schema *excelconv.Schema, target excelconv.Expo
 				}
 			}
 		}
+		for _, ix := range excelconv.DistinctFieldIndexes(visible) {
+			gf := excelconv.FieldsInIndex(visible, ix)
+			if groupFieldsComparable(gf, schema) {
+				continue
+			}
+			for _, f := range gf {
+				_, impStrconv, impFmt := goGroupKeyPartExpr(f, schema, "r")
+				if impStrconv {
+					needStrconv = true
+				}
+				if impFmt {
+					needFmt = true
+				}
+			}
+		}
 	}
 	return needStrconv, needFmt
 }
 
-func anyTableHasFieldGroups(schema *excelconv.Schema, target excelconv.ExportTarget) bool {
+func anyTableHasGroupsOrIndexes(schema *excelconv.Schema, target excelconv.ExportTarget) bool {
 	for _, tname := range sortedTableKeys(schema.Tables) {
 		visible := visibleTableFields(schema.Tables[tname], target)
-		if len(excelconv.DistinctFieldGroups(visible)) > 0 {
+		if len(excelconv.DistinctFieldGroups(visible)) > 0 || len(excelconv.DistinctFieldIndexes(visible)) > 0 {
 			return true
 		}
 	}

@@ -35,7 +35,21 @@ func (g *Wallpaper_rowGrp_group2) GetTime2() int {
 	return g.time2
 }
 
-// WallpaperRow 对应表 "Wallpaper" 的一行（JSON 扁平；@Type「分组」用于行视图与 Table.GetRowsByGroupKey）。
+// Wallpaper_rowIdx_index1 表 "Wallpaper" 索引 "index1"（由行扁平字段组装的视图，JSON 中无此嵌套）。
+type Wallpaper_rowIdx_index1 struct {
+	video1 string
+	time1  int
+}
+
+func (g *Wallpaper_rowIdx_index1) GetVideo1() string {
+	return g.video1
+}
+
+func (g *Wallpaper_rowIdx_index1) GetTime1() int {
+	return g.time1
+}
+
+// WallpaperRow 对应表 "Wallpaper" 的一行（JSON 扁平；@Type「分组/索引」用于行视图与 Table 查询）。
 type WallpaperRow struct {
 	id        int64
 	cover     string
@@ -127,6 +141,13 @@ func (r *WallpaperRow) ViewAsGroup2() Wallpaper_rowGrp_group2 {
 	}
 }
 
+func (r *WallpaperRow) ViewAsIndex() Wallpaper_rowIdx_index1 {
+	return Wallpaper_rowIdx_index1{
+		video1: r.video1,
+		time1:  r.time1,
+	}
+}
+
 // Wallpaper_group 构造 @Type 分组 "group" 的 map 键（形参与组内字段顺序、类型一致）。
 func Wallpaper_group(video1 string, time1 int) Wallpaper_rowGrp_group {
 	return Wallpaper_rowGrp_group{
@@ -143,11 +164,20 @@ func Wallpaper_group2(video2 string, time2 int) Wallpaper_rowGrp_group2 {
 	}
 }
 
+// Wallpaper_index1 构造 @Type 索引 "index1" 的 map 键（形参与组内字段顺序、类型一致）。
+func Wallpaper_index1(video1 string, time1 int) Wallpaper_rowIdx_index1 {
+	return Wallpaper_rowIdx_index1{
+		video1: video1,
+		time1:  time1,
+	}
+}
+
 type WallpaperTable struct {
 	dict           map[int64]*WallpaperRow
 	list           []*WallpaperRow
 	byGroup_group  map[Wallpaper_rowGrp_group][]*WallpaperRow  // @Type 分组 "group"
 	byGroup_group2 map[Wallpaper_rowGrp_group2][]*WallpaperRow // @Type 分组 "group2"
+	byIndex_index1 map[Wallpaper_rowIdx_index1]*WallpaperRow   // @Type 索引 "index1"（复合键唯一）
 }
 
 func (r *WallpaperTable) load(path string) error {
@@ -164,11 +194,14 @@ func (r *WallpaperTable) load(path string) error {
 	}
 	r.byGroup_group = make(map[Wallpaper_rowGrp_group][]*WallpaperRow)
 	r.byGroup_group2 = make(map[Wallpaper_rowGrp_group2][]*WallpaperRow)
+	r.byIndex_index1 = make(map[Wallpaper_rowIdx_index1]*WallpaperRow)
 	for _, row := range r.list {
 		kg0 := Wallpaper_group(row.video1, row.time1)
 		r.byGroup_group[kg0] = append(r.byGroup_group[kg0], row)
 		kg1 := Wallpaper_group2(row.video2, row.time2)
 		r.byGroup_group2[kg1] = append(r.byGroup_group2[kg1], row)
+		ik0 := Wallpaper_index1(row.video1, row.time1)
+		r.byIndex_index1[ik0] = row
 	}
 	return nil
 }
@@ -185,6 +218,12 @@ func (r *WallpaperTable) GetRowsByGroup_group2(video2 string, time2 int) []*Wall
 	return r.byGroup_group2[k]
 }
 
+// GetByIndexKey 按 @Type 索引查询单行（形参顺序、类型与 Wallpaper_index1 一致；复合键表内唯一）。
+func (r *WallpaperTable) GetByIndexKey(video1 string, time1 int) *WallpaperRow {
+	k := Wallpaper_index1(video1, time1)
+	return r.byIndex_index1[k]
+}
+
 func (r *WallpaperTable) Get(id int64) *WallpaperRow {
 	row, _ := r.dict[id]
 	return row
@@ -197,7 +236,7 @@ func (r *WallpaperTable) Index(idx int) *WallpaperRow {
 	return r.list[idx]
 }
 
-func (r *WallpaperTable) Range(f func(*WallpaperRow) bool) {
+func (r *WallpaperTable) ForEach(f func(*WallpaperRow) bool) {
 	for _, row := range r.dict {
 		if !f(row) {
 			return
@@ -205,7 +244,7 @@ func (r *WallpaperTable) Range(f func(*WallpaperRow) bool) {
 	}
 }
 
-func (r *WallpaperTable) SeqRange(f func(*WallpaperRow) bool) {
+func (r *WallpaperTable) ForEachOrdered(f func(*WallpaperRow) bool) {
 	for _, row := range r.list {
 		if !f(row) {
 			return

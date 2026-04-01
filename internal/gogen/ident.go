@@ -57,6 +57,10 @@ func tableGroupTypeIdent(tableName, groupJSONKey string) string {
 	return tableName + "_rowGrp_" + privateFieldIdent(groupJSONKey)
 }
 
+func tableIndexTypeIdent(tableName, indexJSONKey string) string {
+	return tableName + "_rowIdx_" + privateFieldIdent(indexJSONKey)
+}
+
 func viewAsGroupMethodName(groupKey string) string {
 	p := privateFieldIdent(groupKey)
 	if p == "" {
@@ -67,6 +71,22 @@ func viewAsGroupMethodName(groupKey string) string {
 		return "ViewAsGroup"
 	}
 	return "ViewAs" + string(unicode.ToUpper(r)) + p[n:]
+}
+
+// viewAsIndexMethodName 多索引时需方法名互不重复；numIndex 为该表上 @Type 索引个数。
+func viewAsIndexMethodName(indexKey string, numIndex int) string {
+	if numIndex <= 1 {
+		return "ViewAsIndex"
+	}
+	p := privateFieldIdent(indexKey)
+	if p == "" {
+		return "ViewAsIndex"
+	}
+	r, n := utf8.DecodeRuneInString(p)
+	if r == utf8.RuneError {
+		return "ViewAsIndex"
+	}
+	return "ViewAsIndex" + string(unicode.ToUpper(r)) + p[n:]
 }
 
 func rowJSONAuxTypeName(tableName string) string {
