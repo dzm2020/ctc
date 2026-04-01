@@ -58,6 +58,12 @@ func valueToIndexKeyPart(v interface{}, fld Field, schema *Schema) (string, erro
 			return "", err
 		}
 		return strconv.FormatInt(i, 10), nil
+	case "float64":
+		f, err := coerceFloat64(v)
+		if err != nil {
+			return "", err
+		}
+		return strconv.FormatFloat(f, 'g', -1, 64), nil
 	default:
 		if schema != nil && schema.Enums[fld.Type] != nil {
 			i, err := coerceInt64(v)
@@ -67,6 +73,29 @@ func valueToIndexKeyPart(v interface{}, fld Field, schema *Schema) (string, erro
 			return strconv.FormatInt(i, 10), nil
 		}
 		return fmt.Sprint(v), nil
+	}
+}
+
+func coerceFloat64(v interface{}) (float64, error) {
+	switch x := v.(type) {
+	case float64:
+		return x, nil
+	case float32:
+		return float64(x), nil
+	case int:
+		return float64(x), nil
+	case int32:
+		return float64(x), nil
+	case int64:
+		return float64(x), nil
+	case json.Number:
+		return x.Float64()
+	default:
+		s := strings.TrimSpace(fmt.Sprint(v))
+		if s == "" {
+			return 0, nil
+		}
+		return strconv.ParseFloat(s, 64)
 	}
 }
 

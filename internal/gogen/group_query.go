@@ -56,6 +56,13 @@ func buildGroupQuerySwitch(
 					"if _err != nil { return nil }",
 				)
 				q.StructLines = append(q.StructLines, fmt.Sprintf("%s: %s", priv, v))
+			case "float64":
+				v := fmt.Sprintf("_gk%d", i)
+				q.ParseLines = append(q.ParseLines,
+					fmt.Sprintf("%s, _err := strconv.ParseFloat(keyParts[%d], 64)", v, i),
+					"if _err != nil { return nil }",
+				)
+				q.StructLines = append(q.StructLines, fmt.Sprintf("%s: %s", priv, v))
 			default:
 				if schema != nil && schema.Enums[fld.Type] != nil {
 					v := fmt.Sprintf("_gk%d", i)
@@ -92,6 +99,13 @@ func buildGroupQuerySwitch(
 				"if _err != nil { return nil }",
 			)
 			q.KeyJoinElts = append(q.KeyJoinElts, fmt.Sprintf("strconv.FormatInt(%s, 10)", v))
+		case "float64":
+			v := fmt.Sprintf("_gs%d", i)
+			q.ParseLines = append(q.ParseLines,
+				fmt.Sprintf("%s, _err := strconv.ParseFloat(keyParts[%d], 64)", v, i),
+				"if _err != nil { return nil }",
+			)
+			q.KeyJoinElts = append(q.KeyJoinElts, fmt.Sprintf("strconv.FormatFloat(%s, 'g', -1, 64)", v))
 		default:
 			if schema != nil && schema.Enums[fld.Type] != nil {
 				v := fmt.Sprintf("_gs%d", i)

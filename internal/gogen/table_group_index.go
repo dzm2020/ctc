@@ -81,6 +81,8 @@ func goGroupKeyPartExpr(fld excelconv.Field, schema *excelconv.Schema, rowVar st
 		return fmt.Sprintf("strconv.Itoa(%s)", path), true, false
 	case "int64":
 		return fmt.Sprintf("strconv.FormatInt(%s, 10)", path), true, false
+	case "float64":
+		return fmt.Sprintf("strconv.FormatFloat(%s, 'g', -1, 64)", path), true, false
 	default:
 		if strings.HasPrefix(got, "[]") {
 			if got == "[]string" {

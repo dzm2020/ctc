@@ -188,6 +188,8 @@ func baseGoType(typeName string, schema *excelconv.Schema) string {
 		return "int"
 	case "int64":
 		return "int64"
+	case "float64":
+		return "float64"
 	default:
 		if schema.Structs[typeName] != nil {
 			return typeName

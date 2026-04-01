@@ -182,6 +182,8 @@ func zeroForField(fld Field, schema *Schema) interface{} {
 		return 0
 	case "int64":
 		return int64(0)
+	case "float64":
+		return float64(0)
 	default:
 		if schema != nil && schema.Enums[fld.Type] != nil {
 			return 0
@@ -210,6 +212,16 @@ func parseScalar(typeName, raw string, schema *Schema) (interface{}, error) {
 			return int64(f), nil
 		}
 		return v, nil
+	case "float64":
+		s := strings.TrimSpace(raw)
+		if s == "" {
+			return float64(0), nil
+		}
+		f, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			return nil, err
+		}
+		return f, nil
 	default:
 		if schema.Enums[typeName] != nil {
 			if m, ok := schema.EnumValue[typeName]; ok {

@@ -16,7 +16,7 @@ type Field struct {
 	Table      string
 	NameCN     string
 	Name       string
-	Type       string // string | int | int64 | 枚举名 | 结构名
+	Type       string // string | int | int64 | float64 | 枚举名 | 结构名
 	ArraySplit string
 	Default    string
 	Filter     FieldFilter
