@@ -12,11 +12,9 @@ type Config struct {
 	// Inputs 输入目录或 .xlsx 文件路径列表；目录会递归收集其中所有 .xlsx。至少一条且能解析出文件。
 	Inputs []string `json:"inputs"`
 	Output Output   `json:"output"`
-	// FilterTags 导出时使用的标签集合（如 C、S）；与 @Type「筛选」列中逗号分隔的标签求交集，有交集则导出该字段/成员。
-	// 非空时优先于 Target；省略或全为空元素时按 Target 推断（both→C+S）。
+	// FilterTags 本次导出要保留的筛选标签集合，与 @Type「筛选」列求交集；不限于 C/S，可为 GM、EDITOR 等任意自定义标签（与表内写法一致，比较时统一大写）。
+	// 省略或解析后为空时，默认按 C+S（兼容常见客户端+服务端双端）；若表内仅用自定义标签，请显式写出，例如 ["GM"] 或 ["C","S","GM"]。
 	FilterTags []string `json:"filterTags"`
-	// Target 兼容旧配置：both | client | server；仅在 FilterTags 无效（未配置或可解析标签为空）时使用。
-	Target string `json:"target"`
 	// PrettyJSON 为 true 时 JSON 缩进格式化；省略则为 true。
 	PrettyJSON *bool `json:"prettyJson"`
 	// GoPackage 生成 Go 代码的包名，默认 gamedata。
@@ -69,15 +67,6 @@ func (c *Config) CodePathOrDefault() string {
 	s := strings.TrimSpace(c.Output.CodePath)
 	if s == "" {
 		return "generated/gamedata"
-	}
-	return s
-}
-
-// TargetOrDefault 返回小写 target 字符串。
-func (c *Config) TargetOrDefault() string {
-	s := strings.ToLower(strings.TrimSpace(c.Target))
-	if s == "" {
-		return "both"
 	}
 	return s
 }

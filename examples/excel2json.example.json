@@ -8,7 +8,6 @@
 		"csharpPath": "./output/csharp"
 	},
 	"filterTags": ["C", "S"],
-	"target": "both",
 	"prettyJson": true,
 	"goPackage": "gamedata",
 	"csharpNamespace": "GameData",

@@ -35,7 +35,7 @@ func main() {
 
 	jsonOut := cfg.JsonPathOrDefault()
 	goOut := cfg.CodePathOrDefault()
-	exportTags, err := excelconv.ResolveExportFilterTags(cfg.FilterTags, cfg.TargetOrDefault())
+	exportTags, err := excelconv.ResolveExportFilterTags(cfg.FilterTags)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

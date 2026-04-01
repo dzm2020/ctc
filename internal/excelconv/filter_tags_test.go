@@ -34,22 +34,30 @@ func TestFieldVisibleCustomTagGM(t *testing.T) {
 }
 
 func TestResolveExportFilterTags(t *testing.T) {
-	got, err := ResolveExportFilterTags([]string{"C", " S "}, "")
+	got, err := ResolveExportFilterTags([]string{"C", " S "})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(got) != 2 || got[0] != "C" || got[1] != "S" {
 		t.Fatalf("got %v", got)
 	}
-	got2, err := ResolveExportFilterTags([]string{"C,S"}, "")
+	got2, err := ResolveExportFilterTags([]string{"C,S"})
 	if err != nil || len(got2) != 2 {
 		t.Fatalf("got2 %v err %v", got2, err)
 	}
-	got3, err := ResolveExportFilterTags(nil, "client")
-	if err != nil || len(got3) != 1 || got3[0] != "C" {
-		t.Fatalf("got3 %v", got3)
+	got3, err := ResolveExportFilterTags(nil)
+	if err != nil || len(got3) != 2 || got3[0] != "C" || got3[1] != "S" {
+		t.Fatalf("empty filterTags should default to C,S, got %v", got3)
 	}
-	got4, err := ResolveExportFilterTags([]string{"gm"}, "")
+	got3b, err := ResolveExportFilterTags([]string{})
+	if err != nil || len(got3b) != 2 {
+		t.Fatalf("got3b %v", got3b)
+	}
+	gotClient, err := ResolveExportFilterTags([]string{"C"})
+	if err != nil || len(gotClient) != 1 || gotClient[0] != "C" {
+		t.Fatalf("gotClient %v", gotClient)
+	}
+	got4, err := ResolveExportFilterTags([]string{"gm"})
 	if err != nil || len(got4) != 1 || got4[0] != "GM" {
 		t.Fatalf("got4 %v", got4)
 	}

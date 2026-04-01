@@ -1,16 +1,13 @@
 package excelconv
 
-import (
-	"fmt"
-	"strings"
-)
+import "strings"
 
 // NormalizeFilterTag 策划填写的单个标签：去空白并统一为大写（比较用）。
 func NormalizeFilterTag(s string) string {
 	return strings.ToUpper(strings.TrimSpace(s))
 }
 
-// ParseFieldFilterTags 解析 @Type「筛选」列：逗号分隔，如 "C,S"、"CS"。
+// ParseFieldFilterTags 解析 @Type「筛选」列：逗号分隔；标签可为任意字符串（如 C、S、GM、EDITOR），不限两种。
 // 空字符串或仅空白视为无标签（与任意导出配置均匹配，即全端导出）。
 // 兼容旧值 CS：展开为 C 与 S。
 func ParseFieldFilterTags(f FieldFilter) []string {
@@ -70,9 +67,9 @@ func FieldVisible(f FieldFilter, exportTags []string) bool {
 	return false
 }
 
-// ResolveExportFilterTags 根据配置得到导出用标签列表（大写、去重）。
-// filterTags 非空时仅使用其中标签（每项可按逗号再拆分）；否则按 target 推断（both→C+S，client→C，server→S）。
-func ResolveExportFilterTags(filterTags []string, target string) ([]string, error) {
+// ResolveExportFilterTags 根据配置得到导出用标签列表（大写、去重）；支持 C、S 及任意自定义标签。
+// 每项可按逗号再拆分；解析结果为空时默认 C+S（与旧版 target both 一致；若项目只用自定义标签请在配置中显式列出）。
+func ResolveExportFilterTags(filterTags []string) ([]string, error) {
 	seen := make(map[string]struct{})
 	var out []string
 	for _, s := range filterTags {
@@ -93,14 +90,5 @@ func ResolveExportFilterTags(filterTags []string, target string) ([]string, erro
 	if len(out) > 0 {
 		return out, nil
 	}
-	switch strings.ToLower(strings.TrimSpace(target)) {
-	case "both", "cs", "all", "":
-		return []string{"C", "S"}, nil
-	case "client", "c":
-		return []string{"C"}, nil
-	case "server", "s":
-		return []string{"S"}, nil
-	default:
-		return nil, fmt.Errorf("target 无效: %q（可选 both、client、server；或配置 filterTags）", target)
-	}
+	return []string{"C", "S"}, nil
 }
