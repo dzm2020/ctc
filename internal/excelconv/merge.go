@@ -137,11 +137,11 @@ func MergeTableMaps(dst map[string]map[string]map[string]interface{}, src map[st
 		vis := VisibleTableFields(schema.Tables[tname], target)
 		for id, row := range rows {
 			if _, exists := dst[tname][id]; exists {
-				return fmt.Errorf("表 %q 主键 %q 合并冲突（已由其他 xlsx 加载，当前: %s）", tname, id, srcFile)
+				return fmt.Errorf("表 %q 数据合并: 主键列值 %q 重复（与已加载数据冲突；当前文件: %s）", tname, id, srcFile)
 			}
 			if len(seen) > 0 {
-				if err := addRecordToIndexSeen(row, vis, schema, seen, tname); err != nil {
-					return fmt.Errorf("表 %q 主键 %q（当前: %s）: %w", tname, id, srcFile, err)
+				if err := addRecordToIndexSeen(row, vis, schema, seen, tname, 0, id); err != nil {
+					return fmt.Errorf("表 %q 主键列值 %q（当前文件: %s）: %w", tname, id, srcFile, err)
 				}
 			}
 			dst[tname][id] = row

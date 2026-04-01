@@ -78,6 +78,10 @@ func main() {
 		fmt.Printf("已处理 %s\n", xlsxPath)
 	}
 	schemaMerged := excelconv.MergeSchemas(schemas)
+	if err := excelconv.ValidateSchemaRules(schemaMerged); err != nil {
+		fmt.Fprintf(os.Stderr, "@Type 合并后校验失败: %v\n", err)
+		os.Exit(1)
+	}
 
 	if err := os.MkdirAll(jsonOut, 0o755); err != nil {
 		fmt.Fprintf(os.Stderr, "创建目录: %v\n", err)

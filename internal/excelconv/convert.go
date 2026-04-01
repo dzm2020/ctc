@@ -39,7 +39,7 @@ func convertDataSheet(f *excelize.File, sheet string, schema *Schema, target Exp
 	}
 	header := rows[0]
 	if len(header) == 0 || strings.TrimSpace(header[0]) != "ArrayDict" {
-		return nil, fmt.Errorf("第一行第一列必须是 ArrayDict")
+		return nil, fmt.Errorf("表 %q 第 1 行 列 %s(%q): 第一列必须是 ArrayDict", sheet, ExcelColumnLetter(0), strings.TrimSpace(header[0]))
 	}
 
 	fields := schema.Tables[sheet]
@@ -48,9 +48,9 @@ func convertDataSheet(f *excelize.File, sheet string, schema *Schema, target Exp
 	for _, fld := range fields {
 		fieldByName[fld.Name] = fld
 	}
-	indexSeen := make(map[string]map[string]struct{})
+	indexSeen := make(map[string]map[string]indexSeenEntry)
 	for _, ix := range DistinctFieldIndexes(visible) {
-		indexSeen[ix] = make(map[string]struct{})
+		indexSeen[ix] = make(map[string]indexSeenEntry)
 	}
 
 	colNames := make([]string, len(header))
@@ -64,6 +64,7 @@ func convertDataSheet(f *excelize.File, sheet string, schema *Schema, target Exp
 	}
 
 	result := make(map[string]map[string]interface{})
+	idFirstRow := make(map[string]int)
 	for ridx := 1; ridx < len(rows); ridx++ {
 		row := rows[ridx]
 		if len(row) == 0 {
@@ -74,14 +75,22 @@ func convertDataSheet(f *excelize.File, sheet string, schema *Schema, target Exp
 		}
 
 		key := strings.TrimSpace(row[0])
-		if _, exists := result[key]; exists {
-			return nil, fmt.Errorf("表 %q 行 %d: 主键 ID %q 重复", sheet, ridx+1, key)
+		if prevRow, exists := idFirstRow[key]; exists {
+			col0Name := colNames[0]
+			if col0Name == "" {
+				col0Name = RowJSONIDKey
+			}
+			return nil, fmt.Errorf("表 %q 第 %d 行 列 %s(%q): 主键 ID 值 %q 与第 %d 行重复（主索引唯一）", sheet, ridx+1, ExcelColumnLetter(0), col0Name, key, prevRow)
 		}
 
 		idType := schema.PrimaryKeyTypeForTable(sheet)
 		idVal, err := ParsePrimaryKeyCell(key, idType)
 		if err != nil {
-			return nil, fmt.Errorf("表 %q 行 %d: %w", sheet, ridx+1, err)
+			col0Name := colNames[0]
+			if col0Name == "" {
+				col0Name = RowJSONIDKey
+			}
+			return nil, fmt.Errorf("表 %q 第 %d 行 列 %s(%q): %w", sheet, ridx+1, ExcelColumnLetter(0), col0Name, err)
 		}
 
 		rec := make(map[string]interface{})
@@ -111,16 +120,17 @@ func convertDataSheet(f *excelize.File, sheet string, schema *Schema, target Exp
 			}
 			val, err := cellValue(fld, cell, schema)
 			if err != nil {
-				return nil, fmt.Errorf("行 %d 列 %q: %w", ridx+1, name, err)
+				return nil, fmt.Errorf("表 %q 第 %d 行 列 %s(%q): %w", sheet, ridx+1, ExcelColumnLetter(c), name, err)
 			}
 			// JSON 始终扁平：字段名即列名，不参与 @Type「分组/索引」嵌套。
 			rec[fld.Name] = val
 		}
 		if len(indexSeen) > 0 {
-			if err := addRecordToIndexSeen(rec, visible, schema, indexSeen, sheet); err != nil {
-				return nil, fmt.Errorf("表 %q 行 %d: %w", sheet, ridx+1, err)
+			if err := addRecordToIndexSeen(rec, visible, schema, indexSeen, sheet, ridx+1, key); err != nil {
+				return nil, err
 			}
 		}
+		idFirstRow[key] = ridx + 1
 		result[key] = rec
 	}
 	return result, nil

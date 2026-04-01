@@ -236,7 +236,7 @@ func (r *WallpaperTable) Index(idx int) *WallpaperRow {
 	return r.list[idx]
 }
 
-func (r *WallpaperTable) ForEach(f func(*WallpaperRow) bool) {
+func (r *WallpaperTable) Range(f func(*WallpaperRow) bool) {
 	for _, row := range r.dict {
 		if !f(row) {
 			return
@@ -244,7 +244,7 @@ func (r *WallpaperTable) ForEach(f func(*WallpaperRow) bool) {
 	}
 }
 
-func (r *WallpaperTable) ForEachOrdered(f func(*WallpaperRow) bool) {
+func (r *WallpaperTable) SeqRange(f func(*WallpaperRow) bool) {
 	for _, row := range r.list {
 		if !f(row) {
 			return

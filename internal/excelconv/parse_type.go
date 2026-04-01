@@ -79,6 +79,9 @@ func ParseTypeSheet(f *excelize.File) (*Schema, error) {
 			if fld.Name == "" || fld.Type == "" {
 				return nil, fmt.Errorf("@Type 第 %d 行: 表 %s 字段名或类型为空", i+1, tbl)
 			}
+			if fld.ArraySplit != "" && (strings.TrimSpace(fld.Group) != "" || strings.TrimSpace(fld.Index) != "") {
+				return nil, fmt.Errorf("@Type 工作表 第 %d 行: 表 %q 字段 %q 含「数组切割」，不能填写「分组」或「索引」", i+1, tbl, fld.Name)
+			}
 			s.Tables[tbl] = append(s.Tables[tbl], fld)
 		case "枚举":
 			en := strings.TrimSpace(row[1])
@@ -94,11 +97,23 @@ func ParseTypeSheet(f *excelize.File) (*Schema, error) {
 				Filter: FieldFilter(strings.TrimSpace(row[7])),
 			}
 			if m.Name == "" {
-				return nil, fmt.Errorf("@Type 第 %d 行: 枚举 %s 成员名为空", i+1, en)
+				return nil, fmt.Errorf("@Type 工作表 第 %d 行: 枚举 %s 成员名为空", i+1, en)
+			}
+			if strings.TrimSpace(row[6]) == "" {
+				return nil, fmt.Errorf("@Type 工作表 第 %d 行 列 %s(%q): 枚举 %q 成员 %q 必须填写「默认值」（整数，不可为空）", i+1, ExcelColumnLetter(6), typeHeader[6], en, m.Name)
 			}
 			v, perr := parseIntDefault(m.Value, 0)
 			if perr != nil {
-				return nil, fmt.Errorf("@Type 第 %d 行: 枚举默认值 %q: %w", i+1, m.Value, perr)
+				return nil, fmt.Errorf("@Type 工作表 第 %d 行 列 %s(%q): 枚举 %q 成员 %q 默认值 %q: %w", i+1, ExcelColumnLetter(6), typeHeader[6], en, m.Name, m.Value, perr)
+			}
+			for _, ex := range s.Enums[en] {
+				if ex.Name == m.Name {
+					return nil, fmt.Errorf("@Type 工作表 第 %d 行: 枚举 %q 成员名 %q 重复", i+1, en, m.Name)
+				}
+				ev, _ := parseIntDefault(strings.TrimSpace(ex.Value), 0)
+				if ev == v {
+					return nil, fmt.Errorf("@Type 工作表 第 %d 行: 枚举 %q 成员 %q 的默认值数值 %d 与成员 %q 重复", i+1, en, m.Name, v, ex.Name)
+				}
 			}
 			s.Enums[en] = append(s.Enums[en], m)
 			s.registerEnumValue(en, m.Name, v)
@@ -146,6 +161,9 @@ func ParseTypeSheet(f *excelize.File) (*Schema, error) {
 		if err := ValidateGroupIndexNamesDisjoint(tname, fields); err != nil {
 			return nil, err
 		}
+	}
+	if err := ValidateSchemaRules(s); err != nil {
+		return nil, err
 	}
 	return s, nil
 }
