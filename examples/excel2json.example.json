@@ -3,9 +3,9 @@
 		"./tables"
 	],
 	"output": {
-		"codePath": "output/gamedata",
-		"jsonPath": "output/json",
-		"csharpPath": "output/csharp"
+		"codePath": "./output/gamedata",
+		"jsonPath": "./output/json",
+		"csharpPath": "./output/csharp"
 	},
 	"filterTags": ["C", "S"],
 	"target": "both",

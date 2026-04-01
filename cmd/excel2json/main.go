@@ -12,6 +12,7 @@ import (
 	"ctc/internal/csharpgen"
 	"ctc/internal/excelconv"
 	"ctc/internal/gogen"
+	"ctc/internal/outputs"
 	"ctc/pkg/tablebin"
 
 	"github.com/xuri/excelize/v2"
@@ -85,9 +86,41 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := os.MkdirAll(jsonOut, 0o755); err != nil {
-		fmt.Fprintf(os.Stderr, "创建目录: %v\n", err)
+	var outDirs []string
+	outDirs = append(outDirs, jsonOut)
+	if !cfg.SkipGo {
+		if g := strings.TrimSpace(goOut); g != "" {
+			outDirs = append(outDirs, g)
+		}
+	}
+	if !cfg.SkipCSharp {
+		if cs := cfg.CSharpPathOrDefault(); cs != "" {
+			outDirs = append(outDirs, cs)
+		}
+	}
+	if err := outputs.ClearDirectoriesUnique(outDirs); err != nil {
+		fmt.Fprintf(os.Stderr, "清空输出目录: %v\n", err)
 		os.Exit(1)
+	}
+	seenLog := make(map[string]struct{})
+	var logParts []string
+	for _, d := range outDirs {
+		d = strings.TrimSpace(d)
+		if d == "" {
+			continue
+		}
+		abs, err := filepath.Abs(filepath.Clean(d))
+		if err != nil {
+			continue
+		}
+		if _, ok := seenLog[abs]; ok {
+			continue
+		}
+		seenLog[abs] = struct{}{}
+		logParts = append(logParts, d)
+	}
+	if len(logParts) > 0 {
+		fmt.Printf("已清空输出目录: %s\n", strings.Join(logParts, ", "))
 	}
 
 	indent := ""
