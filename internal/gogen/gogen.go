@@ -183,7 +183,7 @@ func baseGoType(typeName string, schema *excelconv.Schema) string {
 		return "float64"
 	default:
 		if schema.Structs[typeName] != nil {
-			return typeName
+			return "*" + typeName
 		}
 		if schema.Enums[typeName] != nil {
 			return typeName

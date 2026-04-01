@@ -13,7 +13,10 @@ import (
 func binLoadAssignLines(f excelconv.Field, schema *excelconv.Schema, exportTags []string, recv, priv, goType string) []string {
 	bt := strings.TrimSpace(f.Type)
 	if f.ArraySplit == "" && schema.Structs[bt] != nil {
-		return binLoadStructFields(bt, schema, exportTags, recv+"."+priv, "\t\t\t")
+		prefix := recv + "." + priv
+		lines := []string{fmt.Sprintf("\t\t\t%s = &%s{}", prefix, bt)}
+		lines = append(lines, binLoadStructFields(bt, schema, exportTags, prefix, "\t\t\t")...)
+		return lines
 	}
 	if f.ArraySplit != "" && schema.Structs[bt] != nil {
 		return binLoadSliceOfStruct(recv+"."+priv, bt, goType, schema, exportTags, "\t\t\t")
@@ -64,13 +67,19 @@ func binLoadAssignLines(f excelconv.Field, schema *excelconv.Schema, exportTags 
 			fmt.Sprintf("\t\t\tvar _ev []int32\n\t\t\t_ev, err = dec.ReadInt32ZigzagSlice()\n\t\t\tif err != nil {\n\t\t\t\treturn nil, err\n\t\t\t}\n\t\t\t%s.%s = make([]%s, len(_ev))\n\t\t\tfor _i := range _ev {\n\t\t\t\t%s.%s[_i] = %s(_ev[_i])\n\t\t\t}", recv, priv, en, recv, priv, en),
 		}
 	case tablebin.KindSliceStruct:
-		elem := strings.TrimSpace(strings.TrimPrefix(goType, "[]"))
+		elem := goSliceElemSchemaName(goType)
 		return binLoadSliceOfStruct(recv+"."+priv, elem, goType, schema, exportTags, "\t\t\t")
 	default:
 		return []string{
 			fmt.Sprintf("\t\t\t%s.%s, err = dec.ReadString()\n\t\t\tif err != nil {\n\t\t\t\treturn nil, err\n\t\t\t}", recv, priv),
 		}
 	}
+}
+
+// goSliceElemSchemaName 从 Go 切片类型（如 "[]*Foo"）得到 @Type 结构体名 "Foo"，供 bin 解码与 schema 查找。
+func goSliceElemSchemaName(goSliceType string) string {
+	s := strings.TrimSpace(strings.TrimPrefix(goSliceType, "[]"))
+	return strings.TrimPrefix(s, "*")
 }
 
 func binLoadSliceOfStruct(assignPrefix, elemTypeName, goSliceType string, schema *excelconv.Schema, exportTags []string, indent string) []string {
@@ -83,6 +92,7 @@ func binLoadSliceOfStruct(assignPrefix, elemTypeName, goSliceType string, schema
 		fmt.Sprintf("%s}", indent),
 		fmt.Sprintf("%s%s = make(%s, _nl)", indent, assignPrefix, goSliceType),
 		fmt.Sprintf("%sfor _si := 0; _si < _nl; _si++ {", indent),
+		fmt.Sprintf("%s%s[_si] = &%s{}", tab, assignPrefix, elemTypeName),
 	}
 	lines = append(lines, binLoadStructFields(elemTypeName, schema, exportTags, assignPrefix+"[_si]", tab)...)
 	lines = append(lines, fmt.Sprintf("%s}", indent))
@@ -106,6 +116,7 @@ func binLoadStructFields(typeName string, schema *excelconv.Schema, exportTags [
 			continue
 		}
 		if schema.Structs[bt] != nil {
+			lines = append(lines, fmt.Sprintf("%s%s = &%s{}", indent, sub, bt))
 			lines = append(lines, binLoadStructFields(bt, schema, exportTags, sub, indent)...)
 			continue
 		}

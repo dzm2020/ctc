@@ -38,34 +38,34 @@ func (g *TBTest_rowIdx_idx1) GetField4() int {
 // TBTestRow 对应表 "TBTest" 的一行（JSON 扁平；@Type「分组/索引」用于行视图与 Table 查询）。
 type TBTestRow struct {
 	id      int64
-	field1  int64        // 字段名1
-	field2  string       // 字段名2
-	field3  float64      // 字段名3
-	field4  int          // 字段名4
-	field5  []int64      // 字段名5
-	field6  []string     // 字段名6
-	field7  []float64    // 字段名7
-	field8  []int        // 字段名8
-	field9  EnumTest     // 字段名9
-	field10 []EnumTest   // 字段名10
-	field11 StructTest   // 字段名11
-	field12 []StructTest // 字段名12
+	field1  int64         // 字段名1
+	field2  string        // 字段名2
+	field3  float64       // 字段名3
+	field4  int           // 字段名4
+	field5  []int64       // 字段名5
+	field6  []string      // 字段名6
+	field7  []float64     // 字段名7
+	field8  []int         // 字段名8
+	field9  EnumTest      // 字段名9
+	field10 []EnumTest    // 字段名10
+	field11 *StructTest   // 字段名11
+	field12 []*StructTest // 字段名12
 }
 
 type rowJSONAux_TBTest struct {
-	ID      int64        `json:"id"`
-	Field1  int64        `json:"Field1"`  // 字段名1
-	Field2  string       `json:"Field2"`  // 字段名2
-	Field3  float64      `json:"Field3"`  // 字段名3
-	Field4  int          `json:"Field4"`  // 字段名4
-	Field5  []int64      `json:"Field5"`  // 字段名5
-	Field6  []string     `json:"Field6"`  // 字段名6
-	Field7  []float64    `json:"Field7"`  // 字段名7
-	Field8  []int        `json:"Field8"`  // 字段名8
-	Field9  EnumTest     `json:"Field9"`  // 字段名9
-	Field10 []EnumTest   `json:"Field10"` // 字段名10
-	Field11 StructTest   `json:"Field11"` // 字段名11
-	Field12 []StructTest `json:"Field12"` // 字段名12
+	ID      int64         `json:"id"`
+	Field1  int64         `json:"Field1"`  // 字段名1
+	Field2  string        `json:"Field2"`  // 字段名2
+	Field3  float64       `json:"Field3"`  // 字段名3
+	Field4  int           `json:"Field4"`  // 字段名4
+	Field5  []int64       `json:"Field5"`  // 字段名5
+	Field6  []string      `json:"Field6"`  // 字段名6
+	Field7  []float64     `json:"Field7"`  // 字段名7
+	Field8  []int         `json:"Field8"`  // 字段名8
+	Field9  EnumTest      `json:"Field9"`  // 字段名9
+	Field10 []EnumTest    `json:"Field10"` // 字段名10
+	Field11 *StructTest   `json:"Field11"` // 字段名11
+	Field12 []*StructTest `json:"Field12"` // 字段名12
 }
 
 func (r *TBTestRow) UnmarshalJSON(data []byte) error {
@@ -133,11 +133,11 @@ func (r *TBTestRow) GetField10() []EnumTest {
 	return r.field10
 }
 
-func (r *TBTestRow) GetField11() StructTest {
+func (r *TBTestRow) GetField11() *StructTest {
 	return r.field11
 }
 
-func (r *TBTestRow) GetField12() []StructTest {
+func (r *TBTestRow) GetField12() []*StructTest {
 	return r.field12
 }
 
