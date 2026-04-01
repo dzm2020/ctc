@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"ctc/internal/config"
+	"ctc/internal/csharpgen"
 	"ctc/internal/excelconv"
 	"ctc/internal/gogen"
 	"ctc/pkg/tablebin"
@@ -135,6 +136,23 @@ func main() {
 				fmt.Printf("  使用 LoadGameData(%q) 加载 .bin（与当前 binaryExport 配置一致）\n", jsonOut)
 			} else {
 				fmt.Printf("  使用 LoadGameData(%q) 加载 .json（与当前 binaryExport 配置一致）\n", jsonOut)
+			}
+		}
+	}
+
+	if !cfg.SkipCSharp {
+		csOut := cfg.CSharpPathOrDefault()
+		if csOut != "" {
+			ns := cfg.CSharpNamespaceOrDefault()
+			if err := csharpgen.WritePackage(csOut, ns, schemaMerged, exportTags, cfg.BinaryExport); err != nil {
+				fmt.Fprintf(os.Stderr, "生成 C#: %v\n", err)
+				os.Exit(1)
+			}
+			fmt.Printf("已生成 C# 工程: %s (namespace %s)\n", csOut, ns)
+			if cfg.BinaryExport {
+				fmt.Printf("  使用 GameData.Load(%q) 加载 .bin\n", jsonOut)
+			} else {
+				fmt.Printf("  使用 GameData.Load(%q) 加载 .json\n", jsonOut)
 			}
 		}
 	}

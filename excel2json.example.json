@@ -4,12 +4,15 @@
 	],
 	"output": {
 		"codePath": "output/gamedata",
-		"jsonPath": "output/json"
+		"jsonPath": "output/json",
+		"csharpPath": "output/csharp"
 	},
 	"filterTags": ["C", "S"],
 	"target": "both",
 	"prettyJson": true,
 	"goPackage": "gamedata",
+	"csharpNamespace": "GameData",
 	"skipGo": false,
+	"skipCSharp": false,
 	"binaryExport": true
 }

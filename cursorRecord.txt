@@ -116,14 +116,18 @@ ErrCode_value = map[string]int32{
 
 
 
+需要支持二进制导出和加载，，自定义一个二进制序列化反序列化的包进行处理，力求将生成的二进制文件压缩到最小
+
+对于自定义类型我并不会配置成json结构如自定义类型ItemConfig
+定义：
+结构	ItemConfig	ID	ID	int					
+结构	ItemConfig	数量	Num	int					
+sheet中数据：
+ID:10002,数量:60
 
 
 
-
-
-
-
-
+对于自定义结构，如果导出的时候是二进制bin文件，加载的时候不使用json加载，而是也使用二进制方式加载
 
 
 

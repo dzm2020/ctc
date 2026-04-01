@@ -3,7 +3,6 @@
 package gamedata
 
 import (
-	"ctc/pkg/tablebin"
 	"encoding/json"
 	"slices"
 )
@@ -13,19 +12,6 @@ type ItemConfig struct {
 	iD  int
 	num int
 }
-
-func (row *ItemConfig) deserialize(dec *tablebin.Decoder) (err error) {
-	row.iD, err = dec.ReadInt()
-	if err != nil {
-		return
-	}
-	row.num, err = dec.ReadInt()
-	if err != nil {
-		return
-	}
-	return
-}
-
 
 type structJSONAux_ItemConfig struct {
 	ID  int `json:"ID"`

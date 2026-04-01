@@ -64,83 +64,6 @@ type WallpaperRow struct {
 	showRewardList []ItemConfig
 }
 
-func (row *WallpaperRow) deserialize(dec *tablebin.Decoder) (err error) {
-	{
-		row.id, err = dec.ReadInt64Zigzag()
-		if err != nil {
-			return
-		}
-	}
-	{
-		row.cover, err = dec.ReadString()
-		if err != nil {
-			return
-		}
-	}
-
-	{
-		row.video1, err = dec.ReadString()
-		if err != nil {
-			return
-		}
-	}
-
-	{
-		row.time1, err = dec.ReadInt()
-		if err != nil {
-			return
-		}
-	}
-
-	{
-		row.video2, err = dec.ReadString()
-		if err != nil {
-			return
-		}
-	}
-
-	{
-		row.time2, err = dec.ReadInt()
-		if err != nil {
-			return
-		}
-	}
-
-	{
-		row.typeField, err = dec.ReadInt()
-		if err != nil {
-			return
-		}
-	}
-
-	{
-		row.video3, err = dec.ReadString()
-		if err != nil {
-			return
-		}
-	}
-
-	{
-		row.time3, err = dec.ReadInt()
-		if err != nil {
-			return
-		}
-	}
-
-	{
-		var _nl int
-		_nl, err = dec.ReadSliceLen()
-		if err != nil {
-			return
-		}
-		row.showRewardList = make([]ItemConfig, _nl)
-		for _si := 0; _si < _nl; _si++ {
-			row.showRewardList[_si].deserialize(dec)
-		}
-	}
-	return
-}
-
 type rowJSONAux_Wallpaper struct {
 	ID             int64        `json:"id"`
 	Cover          string       `json:"Cover"`
@@ -288,7 +211,76 @@ func (r *WallpaperTable) deserialize(path string) ([]*WallpaperRow, error) {
 	list := make([]*WallpaperRow, 0, n)
 	for i := uint64(0); i < n; i++ {
 		row := &WallpaperRow{}
-		row.deserialize(dec)
+		row.id, err = dec.ReadInt64Zigzag()
+		if err != nil {
+			return nil, err
+		}
+		{
+			row.cover, err = dec.ReadString()
+			if err != nil {
+				return nil, err
+			}
+		}
+		{
+			row.video1, err = dec.ReadString()
+			if err != nil {
+				return nil, err
+			}
+		}
+		{
+			row.time1, err = dec.ReadInt()
+			if err != nil {
+				return nil, err
+			}
+		}
+		{
+			row.video2, err = dec.ReadString()
+			if err != nil {
+				return nil, err
+			}
+		}
+		{
+			row.time2, err = dec.ReadInt()
+			if err != nil {
+				return nil, err
+			}
+		}
+		{
+			row.typeField, err = dec.ReadInt()
+			if err != nil {
+				return nil, err
+			}
+		}
+		{
+			row.video3, err = dec.ReadString()
+			if err != nil {
+				return nil, err
+			}
+		}
+		{
+			row.time3, err = dec.ReadInt()
+			if err != nil {
+				return nil, err
+			}
+		}
+		{
+			var _nl int
+			_nl, err = dec.ReadSliceLen()
+			if err != nil {
+				return nil, err
+			}
+			row.showRewardList = make([]ItemConfig, _nl)
+			for _si := 0; _si < _nl; _si++ {
+				row.showRewardList[_si].iD, err = dec.ReadInt()
+				if err != nil {
+					return nil, err
+				}
+				row.showRewardList[_si].num, err = dec.ReadInt()
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
 		list = append(list, row)
 	}
 	return list, nil

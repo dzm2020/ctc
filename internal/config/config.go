@@ -23,14 +23,19 @@ type Config struct {
 	GoPackage string `json:"goPackage"`
 	// SkipGo 为 true 时不生成 Go 代码，默认 false。
 	SkipGo bool `json:"skipGo"`
+	// CSharpNamespace 生成 C# 的根命名空间，默认 GameData。
+	CSharpNamespace string `json:"csharpNamespace"`
+	// SkipCSharp 为 true 时不生成 C# 代码（即使配置了 csharpPath），默认 false。
+	SkipCSharp bool `json:"skipCSharp"`
 	// BinaryExport 为 true：仅写出 «表名».bin（pkg/tablebin 紧凑格式），且生成仅支持 .bin 的加载代码；为 false：仅写出 «表名».json 且生成仅支持 JSON 加载。二者互斥，运行时只存在一种表文件。
 	BinaryExport bool `json:"binaryExport"`
 }
 
 // Output 描述生成物输出路径。
 type Output struct {
-	CodePath string `json:"codePath"` // Go 代码目录
-	JsonPath string `json:"jsonPath"` // JSON 表目录
+	CodePath   string `json:"codePath"`   // Go 代码目录
+	JsonPath   string `json:"jsonPath"`   // JSON / 二进制表目录
+	CSharpPath string `json:"csharpPath"` // C# 代码目录；空表示不生成 C#
 }
 
 // Load 读取并解析 JSON 配置文件；path 须为存在的文件。
@@ -90,6 +95,20 @@ func (c *Config) GoPackageOrDefault() string {
 	s := strings.TrimSpace(c.GoPackage)
 	if s == "" {
 		return "gamedata"
+	}
+	return s
+}
+
+// CSharpPathOrDefault 返回 C# 输出目录；空表示不生成。
+func (c *Config) CSharpPathOrDefault() string {
+	return strings.TrimSpace(c.Output.CSharpPath)
+}
+
+// CSharpNamespaceOrDefault 返回 C# 命名空间。
+func (c *Config) CSharpNamespaceOrDefault() string {
+	s := strings.TrimSpace(c.CSharpNamespace)
+	if s == "" {
+		return "GameData"
 	}
 	return s
 }
