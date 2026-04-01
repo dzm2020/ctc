@@ -3,8 +3,8 @@
 package gamedata
 
 import (
+	"ctc/pkg/tablebin"
 	"encoding/json"
-	"os"
 	"slices"
 )
 
@@ -62,6 +62,83 @@ type WallpaperRow struct {
 	video3         string
 	time3          int
 	showRewardList []ItemConfig
+}
+
+func (row *WallpaperRow) deserialize(dec *tablebin.Decoder) (err error) {
+	{
+		row.id, err = dec.ReadInt64Zigzag()
+		if err != nil {
+			return
+		}
+	}
+	{
+		row.cover, err = dec.ReadString()
+		if err != nil {
+			return
+		}
+	}
+
+	{
+		row.video1, err = dec.ReadString()
+		if err != nil {
+			return
+		}
+	}
+
+	{
+		row.time1, err = dec.ReadInt()
+		if err != nil {
+			return
+		}
+	}
+
+	{
+		row.video2, err = dec.ReadString()
+		if err != nil {
+			return
+		}
+	}
+
+	{
+		row.time2, err = dec.ReadInt()
+		if err != nil {
+			return
+		}
+	}
+
+	{
+		row.typeField, err = dec.ReadInt()
+		if err != nil {
+			return
+		}
+	}
+
+	{
+		row.video3, err = dec.ReadString()
+		if err != nil {
+			return
+		}
+	}
+
+	{
+		row.time3, err = dec.ReadInt()
+		if err != nil {
+			return
+		}
+	}
+
+	{
+		var _nl int
+		_nl, err = dec.ReadSliceLen()
+		if err != nil {
+			return
+		}
+		row.showRewardList = make([]ItemConfig, _nl)
+		for _si := 0; _si < _nl; _si++ {
+			row.showRewardList[_si].deserialize(dec)
+		}
+	}
+	return
 }
 
 type rowJSONAux_Wallpaper struct {
@@ -189,17 +266,35 @@ type WallpaperTable struct {
 }
 
 func (r *WallpaperTable) load(path string) error {
-	data, err := os.ReadFile(path)
+	var err error
+	r.list, err = r.deserialize(path)
 	if err != nil {
-		return err
-	}
-	if err := json.Unmarshal(data, &r.list); err != nil {
 		return err
 	}
 	r.dict = make(map[int64]*WallpaperRow)
 	for _, row := range r.list {
 		r.dict[row.GetID()] = row
 	}
+	r.initGroupAndIndex()
+	return nil
+}
+
+func (r *WallpaperTable) deserialize(path string) ([]*WallpaperRow, error) {
+	dec, err := tablebin.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	n := dec.NumRows()
+	list := make([]*WallpaperRow, 0, n)
+	for i := uint64(0); i < n; i++ {
+		row := &WallpaperRow{}
+		row.deserialize(dec)
+		list = append(list, row)
+	}
+	return list, nil
+}
+
+func (r *WallpaperTable) initGroupAndIndex() {
 	r.byGroup_group = make(map[Wallpaper_rowGrp_group][]*WallpaperRow)
 	r.byGroup_group2 = make(map[Wallpaper_rowGrp_group2][]*WallpaperRow)
 	r.byIndex_index1 = make(map[Wallpaper_rowIdx_index1]*WallpaperRow)
@@ -211,7 +306,6 @@ func (r *WallpaperTable) load(path string) error {
 		ik0 := Wallpaper_index1(row.video1, row.time1)
 		r.byIndex_index1[ik0] = row
 	}
-	return nil
 }
 
 // GetRowsByGroup_group 按 @Type 分组键查询行（形参顺序、类型与 Wallpaper_group 一致）。

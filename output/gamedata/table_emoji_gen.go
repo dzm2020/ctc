@@ -3,8 +3,8 @@
 package gamedata
 
 import (
+	"ctc/pkg/tablebin"
 	"encoding/json"
-	"os"
 	"slices"
 )
 
@@ -85,11 +85,9 @@ type EmojiTable struct {
 }
 
 func (r *EmojiTable) load(path string) error {
-	data, err := os.ReadFile(path)
+	var err error
+	r.list, err = r.deserialize(path)
 	if err != nil {
-		return err
-	}
-	if err := json.Unmarshal(data, &r.list); err != nil {
 		return err
 	}
 	r.dict = make(map[int64]*EmojiRow)
@@ -97,6 +95,66 @@ func (r *EmojiTable) load(path string) error {
 		r.dict[row.GetID()] = row
 	}
 	return nil
+}
+
+func (r *EmojiTable) deserialize(path string) ([]*EmojiRow, error) {
+	dec, err := tablebin.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	n := dec.NumRows()
+	list := make([]*EmojiRow, 0, n)
+	for i := uint64(0); i < n; i++ {
+		row := &EmojiRow{}
+		row.id, err = dec.ReadInt64Zigzag()
+		if err != nil {
+			return nil, err
+		}
+		{
+			row.name, err = dec.ReadString()
+			if err != nil {
+				return nil, err
+			}
+		}
+		{
+			row.shortName, err = dec.ReadString()
+			if err != nil {
+				return nil, err
+			}
+		}
+		{
+			row.icon, err = dec.ReadString()
+			if err != nil {
+				return nil, err
+			}
+		}
+		{
+			row.unlockType, err = dec.ReadInt()
+			if err != nil {
+				return nil, err
+			}
+		}
+		{
+			row.conditionText, err = dec.ReadString()
+			if err != nil {
+				return nil, err
+			}
+		}
+		{
+			row.speed, err = dec.ReadFloat64Slice()
+			if err != nil {
+				return nil, err
+			}
+		}
+		{
+			row.grids, err = dec.ReadInt()
+			if err != nil {
+				return nil, err
+			}
+		}
+		list = append(list, row)
+	}
+	return list, nil
 }
 
 func (r *EmojiTable) Get(id int64) *EmojiRow {
@@ -111,7 +169,7 @@ func (r *EmojiTable) Index(idx int) *EmojiRow {
 	return r.list[idx]
 }
 
-func (r *EmojiTable) ForEach(f func(*EmojiRow) bool) {
+func (r *EmojiTable) Range(f func(*EmojiRow) bool) {
 	for _, row := range r.dict {
 		if !f(row) {
 			return
@@ -119,7 +177,7 @@ func (r *EmojiTable) ForEach(f func(*EmojiRow) bool) {
 	}
 }
 
-func (r *EmojiTable) ForEachOrdered(f func(*EmojiRow) bool) {
+func (r *EmojiTable) SeqRange(f func(*EmojiRow) bool) {
 	for _, row := range r.list {
 		if !f(row) {
 			return

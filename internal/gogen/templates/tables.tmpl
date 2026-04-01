@@ -128,29 +128,42 @@ type {{.TableName}}Table struct {
 }
 
 func (r *{{.TableName}}Table) load(path string) error {
-{{- if .BinaryData}}
-	dec, err := tablebin.Open(path)
+	var err error
+	r.list, err = r.deserialize(path)
 	if err != nil {
 		return err
 	}
+	r.dict = make(map[{{.IDGoType}}]*{{.TableName}}Row)
+	for _, row := range r.list {
+		r.dict[row.GetID()] = row
+	}
+	return nil
+}
+
+func (r *{{.TableName}}Table) deserialize(path string) ([]*{{.TableName}}Row, error) {
+{{- if .BinaryData}}
+	dec, err := tablebin.Open(path)
+	if err != nil {
+		return nil, err
+	}
 	n := dec.NumRows()
-	r.list = make([]*{{.TableName}}Row, 0, n)
+	list := make([]*{{.TableName}}Row, 0, n)
 	for i := uint64(0); i < n; i++ {
 		row := &{{.TableName}}Row{}
 {{- if eq .IDGoType "int64"}}
 		row.id, err = dec.ReadInt64Zigzag()
 		if err != nil {
-			return err
+			return nil, err
 		}
 {{- else if eq .IDGoType "int"}}
 		row.id, err = dec.ReadInt()
 		if err != nil {
-			return err
+			return nil, err
 		}
 {{- else}}
 		row.id, err = dec.ReadString()
 		if err != nil {
-			return err
+			return nil, err
 		}
 {{- end}}
 {{- range .Fields}}
@@ -160,26 +173,19 @@ func (r *{{.TableName}}Table) load(path string) error {
 {{- end}}
 		}
 {{- end}}
-		r.list = append(r.list, row)
+		list = append(list, row)
 	}
-	r.dict = make(map[{{.IDGoType}}]*{{.TableName}}Row)
-	for _, row := range r.list {
-		r.dict[row.GetID()] = row
-	}
-	return nil
+	return list, nil
 {{- else}}
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if err := json.Unmarshal(data, &r.list); err != nil {
-		return err
+	var list []*{{.TableName}}Row
+	if err := json.Unmarshal(data, &list); err != nil {
+		return nil, err
 	}
-	r.dict = make(map[{{.IDGoType}}]*{{.TableName}}Row)
-	for _, row := range r.list {
-		r.dict[row.GetID()] = row
-	}
-	return nil
+	return list, nil
 {{- end}}
 }
 
@@ -195,7 +201,7 @@ func (r *{{.TableName}}Table) Index(idx int) *{{.TableName}}Row {
 	return r.list[idx]
 }
 
-func (r *{{.TableName}}Table) ForEach(f func(*{{.TableName}}Row) bool) {
+func (r *{{.TableName}}Table) Range(f func(*{{.TableName}}Row) bool) {
 	for _, row := range r.dict {
 		if !f(row) {
 			return
@@ -203,7 +209,7 @@ func (r *{{.TableName}}Table) ForEach(f func(*{{.TableName}}Row) bool) {
 	}
 }
 
-func (r *{{.TableName}}Table) ForEachOrdered(f func(*{{.TableName}}Row) bool) {
+func (r *{{.TableName}}Table) SeqRange(f func(*{{.TableName}}Row) bool) {
 	for _, row := range r.list {
 		if !f(row) {
 			return
@@ -230,29 +236,43 @@ type {{.TableName}}Table struct {
 }
 
 func (r *{{.TableName}}Table) load(path string) error {
-{{- if .BinaryData}}
-	dec, err := tablebin.Open(path)
+	var err error
+	r.list, err = r.deserialize(path)
 	if err != nil {
 		return err
 	}
+	r.dict = make(map[{{.IDGoType}}]*{{.TableName}}Row)
+	for _, row := range r.list {
+		r.dict[row.GetID()] = row
+	}
+	r.initGroupAndIndex()
+	return nil
+}
+
+func (r *{{.TableName}}Table) deserialize(path string) ([]*{{.TableName}}Row, error) {
+{{- if .BinaryData}}
+	dec, err := tablebin.Open(path)
+	if err != nil {
+		return nil, err
+	}
 	n := dec.NumRows()
-	r.list = make([]*{{.TableName}}Row, 0, n)
+	list := make([]*{{.TableName}}Row, 0, n)
 	for i := uint64(0); i < n; i++ {
 		row := &{{.TableName}}Row{}
 {{- if eq .IDGoType "int64"}}
 		row.id, err = dec.ReadInt64Zigzag()
 		if err != nil {
-			return err
+			return nil, err
 		}
 {{- else if eq .IDGoType "int"}}
 		row.id, err = dec.ReadInt()
 		if err != nil {
-			return err
+			return nil, err
 		}
 {{- else}}
 		row.id, err = dec.ReadString()
 		if err != nil {
-			return err
+			return nil, err
 		}
 {{- end}}
 {{- range .Fields}}
@@ -262,41 +282,23 @@ func (r *{{.TableName}}Table) load(path string) error {
 {{- end}}
 		}
 {{- end}}
-		r.list = append(r.list, row)
+		list = append(list, row)
 	}
-	r.dict = make(map[{{.IDGoType}}]*{{.TableName}}Row)
-	for _, row := range r.list {
-		r.dict[row.GetID()] = row
-	}
-{{- range .GroupSlots}}
-	r.byGroup_{{.MapSuffix}} = make(map[{{if .Comparable}}{{.GroupType}}{{else}}string{{end}}][]*{{$.TableName}}Row)
-{{- end}}
-{{- range .IndexSlots}}
-	r.byIndex_{{.MapSuffix}} = make(map[{{if .Comparable}}{{.IndexType}}{{else}}string{{end}}]*{{$.TableName}}Row)
-{{- end}}
-	for _, row := range r.list {
-{{- range .GroupSlots}}
-		{{.VarName}} := {{.RowKeyCall}}
-		r.byGroup_{{.MapSuffix}}[{{.VarName}}] = append(r.byGroup_{{.MapSuffix}}[{{.VarName}}], row)
-{{- end}}
-{{- range .IndexSlots}}
-		{{.VarName}} := {{.RowKeyCall}}
-		r.byIndex_{{.MapSuffix}}[{{.VarName}}] = row
-{{- end}}
-	}
-	return nil
+	return list, nil
 {{- else}}
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if err := json.Unmarshal(data, &r.list); err != nil {
-		return err
+	var list []*{{.TableName}}Row
+	if err := json.Unmarshal(data, &list); err != nil {
+		return nil, err
 	}
-	r.dict = make(map[{{.IDGoType}}]*{{.TableName}}Row)
-	for _, row := range r.list {
-		r.dict[row.GetID()] = row
-	}
+	return list, nil
+{{- end}}
+}
+
+func (r *{{.TableName}}Table) initGroupAndIndex() {
 {{- range .GroupSlots}}
 	r.byGroup_{{.MapSuffix}} = make(map[{{if .Comparable}}{{.GroupType}}{{else}}string{{end}}][]*{{$.TableName}}Row)
 {{- end}}
@@ -313,8 +315,6 @@ func (r *{{.TableName}}Table) load(path string) error {
 		r.byIndex_{{.MapSuffix}}[{{.VarName}}] = row
 {{- end}}
 	}
-	return nil
-{{- end}}
 }
 
 {{- range .GetRowsMethods}}
