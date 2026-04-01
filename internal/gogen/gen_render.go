@@ -100,15 +100,13 @@ func renderEnumsFile(pkg string, schema *excelconv.Schema) (string, error) {
 // --- structs ---
 
 type structFileHeaderTmpl struct {
-	Pkg        string
-	NeedSlices bool
+	Pkg string
 }
 
 type structFieldTmpl struct {
 	Priv, GoType, JSONName, Exported, Getter string
-	NameCN                                 string // @Type「中文描述」，单行；空则不生注释
-	UseSliceGetter                         bool
-	BinReadLines                           []string // 仅表行字段：tablebin 解码语句块
+	NameCN       string   // @Type「中文描述」，单行；空则不生注释
+	BinReadLines []string // 仅表行字段：tablebin 解码语句块
 }
 
 type configStructTmpl struct {
@@ -120,14 +118,7 @@ type configStructTmpl struct {
 func renderStructsFile(pkg string, snames []string, schema *excelconv.Schema, exportTags []string) (string, error) {
 	t := codegenRoot()
 	var buf bytes.Buffer
-	structNeedSlices := false
-	for _, sn := range snames {
-		if structFieldsNeedSlices(visibleStructFields(schema.Structs[sn], exportTags)) {
-			structNeedSlices = true
-			break
-		}
-	}
-	if err := t.ExecuteTemplate(&buf, "struct_file_header", structFileHeaderTmpl{Pkg: pkg, NeedSlices: structNeedSlices}); err != nil {
+	if err := t.ExecuteTemplate(&buf, "struct_file_header", structFileHeaderTmpl{Pkg: pkg}); err != nil {
 		return "", err
 	}
 	for _, sn := range snames {
@@ -137,13 +128,12 @@ func renderStructsFile(pkg string, snames []string, schema *excelconv.Schema, ex
 			priv := privateFieldIdent(sf.Name)
 			got := goFieldTypeStruct(sf, schema)
 			fields = append(fields, structFieldTmpl{
-				Priv:           priv,
-				GoType:         got,
-				JSONName:       sf.Name,
-				Exported:       exportedGoIdent(sf.Name),
-				Getter:         getterMethodName(sf.Name),
-				UseSliceGetter: len(got) >= 2 && got[:2] == "[]",
-				NameCN:         excelconv.SanitizeOneLineComment(sf.NameCN),
+				Priv:     priv,
+				GoType:   got,
+				JSONName: sf.Name,
+				Exported: exportedGoIdent(sf.Name),
+				Getter:   getterMethodName(sf.Name),
+				NameCN:   excelconv.SanitizeOneLineComment(sf.NameCN),
 			})
 		}
 		if err := t.ExecuteTemplate(&buf, "config_struct", configStructTmpl{
@@ -162,7 +152,6 @@ func renderStructsFile(pkg string, snames []string, schema *excelconv.Schema, ex
 type tableFileHeaderTmpl struct {
 	Pkg              string
 	NeedOS           bool // JSON 加载需要 os.ReadFile；仅 .bin 时为 false
-	NeedSlices       bool
 	NeedFmt          bool
 	NeedStrconv      bool
 	NeedGroupStrings bool
@@ -281,13 +270,12 @@ func fieldToStructFieldTmpl(f excelconv.Field, schema *excelconv.Schema) structF
 	got := goFieldTypeTable(f, schema)
 	priv := privateFieldIdent(f.Name)
 	return structFieldTmpl{
-		Priv:           priv,
-		GoType:         got,
-		JSONName:       f.Name,
-		Exported:       exportedGoIdent(f.Name),
-		Getter:         getterMethodName(f.Name),
-		UseSliceGetter: len(got) >= 2 && got[:2] == "[]",
-		NameCN:         excelconv.SanitizeOneLineComment(f.NameCN),
+		Priv:     priv,
+		GoType:   got,
+		JSONName: f.Name,
+		Exported: exportedGoIdent(f.Name),
+		Getter:   getterMethodName(f.Name),
+		NameCN:   excelconv.SanitizeOneLineComment(f.NameCN),
 	}
 }
 

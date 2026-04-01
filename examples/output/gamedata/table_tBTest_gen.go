@@ -5,7 +5,6 @@ package gamedata
 import (
 	"encoding/json"
 	"os"
-	"slices"
 )
 
 // TBTest_rowGrp_group1 表 "TBTest" 分组 "group1"（由行扁平字段组装的视图，JSON 中无此嵌套）。
@@ -111,19 +110,19 @@ func (r *TBTestRow) GetField4() int {
 }
 
 func (r *TBTestRow) GetField5() []int64 {
-	return slices.Clone(r.field5)
+	return r.field5
 }
 
 func (r *TBTestRow) GetField6() []string {
-	return slices.Clone(r.field6)
+	return r.field6
 }
 
 func (r *TBTestRow) GetField7() []float64 {
-	return slices.Clone(r.field7)
+	return r.field7
 }
 
 func (r *TBTestRow) GetField8() []int {
-	return slices.Clone(r.field8)
+	return r.field8
 }
 
 func (r *TBTestRow) GetField9() EnumTest {
@@ -131,7 +130,7 @@ func (r *TBTestRow) GetField9() EnumTest {
 }
 
 func (r *TBTestRow) GetField10() []EnumTest {
-	return slices.Clone(r.field10)
+	return r.field10
 }
 
 func (r *TBTestRow) GetField11() StructTest {
@@ -139,7 +138,7 @@ func (r *TBTestRow) GetField11() StructTest {
 }
 
 func (r *TBTestRow) GetField12() []StructTest {
-	return slices.Clone(r.field12)
+	return r.field12
 }
 
 func (r *TBTestRow) ViewAsGroup1() TBTest_rowGrp_group1 {

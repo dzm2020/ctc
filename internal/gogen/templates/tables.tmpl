@@ -4,8 +4,7 @@ package {{.Pkg}}
 
 import (
 	"encoding/json"{{if .NeedOS}}
-	"os"{{end}}{{if .NeedSlices}}
-	"slices"{{end}}{{if .NeedFmt}}
+	"os"{{end}}{{if .NeedFmt}}
 	"fmt"{{end}}{{if .NeedStrconv}}
 	"strconv"{{end}}{{if .NeedGroupStrings}}
 	"strings"{{end}}{{if .NeedTableBin}}
@@ -21,17 +20,12 @@ type {{.TypeName}} struct {
 	{{.Priv}} {{.GoType}}{{if .NameCN}} // {{.NameCN}}{{end}}
 {{- end}}
 }
-{{- range .Fields}}{{if .UseSliceGetter}}
-
-func (g *{{$.TypeName}}) {{.Getter}}() {{.GoType}} {
-	return slices.Clone(g.{{.Priv}})
-}
-{{- else}}
+{{- range .Fields}}
 
 func (g *{{$.TypeName}}) {{.Getter}}() {{.GoType}} {
 	return g.{{.Priv}}
 }
-{{- end}}{{end}}
+{{- end}}
 {{end}}{{end}}
 
 {{define "group_value_ctor"}}// {{.CtorName}} 构造 @Type {{if .ForIndex}}索引{{else}}分组{{end}} {{printf "%q" .GroupKey}} 的 map 键（形参与组内字段顺序、类型一致）。
@@ -87,17 +81,12 @@ func (r *{{.TableName}}Row) UnmarshalJSON(data []byte) error {
 func (r *{{.TableName}}Row) GetID() {{.IDGoType}} {
 	return r.id
 }
-{{- range .Fields}}{{if .UseSliceGetter}}
-
-func (r *{{$.TableName}}Row) {{.Getter}}() {{.GoType}} {
-	return slices.Clone(r.{{.Priv}})
-}
-{{- else}}
+{{- range .Fields}}
 
 func (r *{{$.TableName}}Row) {{.Getter}}() {{.GoType}} {
 	return r.{{.Priv}}
 }
-{{- end}}{{end}}
+{{- end}}
 {{- range .ViewAsGroups}}
 
 func (r *{{$.TableName}}Row) {{.Method}}() {{.GroupType}} {

@@ -107,24 +107,6 @@ func visibleStructFields(fields []excelconv.StructField, exportTags []string) []
 	return excelconv.VisibleStructFields(fields, exportTags)
 }
 
-func tableFieldsNeedSlices(fields []excelconv.Field) bool {
-	for _, f := range fields {
-		if f.ArraySplit != "" {
-			return true
-		}
-	}
-	return false
-}
-
-func structFieldsNeedSlices(fields []excelconv.StructField) bool {
-	for _, f := range fields {
-		if f.ArraySplit != "" {
-			return true
-		}
-	}
-	return false
-}
-
 func tableRowPrimaryKeyGoType(schema *excelconv.Schema, table string) string {
 	switch schema.PrimaryKeyTypeForTable(table) {
 	case "int":

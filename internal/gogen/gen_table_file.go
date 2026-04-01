@@ -24,7 +24,6 @@ func renderOneTableGoFile(pkg, tname string, schema *excelconv.Schema, exportTag
 
 func computeTableFileHeaderForTable(pkg, tname string, schema *excelconv.Schema, exportTags []string, binaryData bool) tableFileHeaderTmpl {
 	vis := visibleTableFields(schema.Tables[tname], exportTags)
-	needSlices := tableFieldsNeedSlices(vis)
 	hasLookup := len(excelconv.DistinctFieldGroups(vis)) > 0 || len(excelconv.DistinctFieldIndexes(vis)) > 0
 	needStrconv, needFmt := false, false
 	if hasLookup {
@@ -64,7 +63,6 @@ func computeTableFileHeaderForTable(pkg, tname string, schema *excelconv.Schema,
 	return tableFileHeaderTmpl{
 		Pkg:              pkg,
 		NeedOS:           !binaryData,
-		NeedSlices:       needSlices,
 		NeedFmt:          needFmt,
 		NeedStrconv:      needStrconv,
 		NeedGroupStrings: hasLookup && needStrings,

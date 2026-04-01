@@ -3,8 +3,7 @@
 package {{.Pkg}}
 
 import (
-	"encoding/json"{{if .NeedSlices}}
-	"slices"{{end}}
+	"encoding/json"
 )
 
 {{end}}
@@ -33,15 +32,10 @@ func (s *{{.StructName}}) UnmarshalJSON(data []byte) error {
 {{- end}}
 	return nil
 }
-{{- range .Fields}}{{if .UseSliceGetter}}
-
-func (s *{{$.StructName}}) {{.Getter}}() {{.GoType}} {
-	return slices.Clone(s.{{.Priv}})
-}
-{{- else}}
+{{- range .Fields}}
 
 func (s *{{$.StructName}}) {{.Getter}}() {{.GoType}} {
 	return s.{{.Priv}}
 }
-{{- end}}{{end}}
+{{- end}}
 {{end}}{{end}}
