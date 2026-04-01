@@ -7,6 +7,9 @@ namespace {{.Namespace}};
 {{range .Structs}}public partial class {{.Name}}
 {
 {{- range .Fields}}
+{{- if .NameCN}}
+	// {{.NameCN}}
+{{- end}}
 	[JsonPropertyName("{{.JsonName}}")] public {{.CsType}} {{.Prop}} { get; set; } = default!;
 {{- end}}
 {{- if $.Binary}}

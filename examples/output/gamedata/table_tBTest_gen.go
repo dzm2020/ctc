@@ -10,8 +10,8 @@ import (
 
 // TBTest_rowGrp_group1 表 "TBTest" 分组 "group1"（由行扁平字段组装的视图，JSON 中无此嵌套）。
 type TBTest_rowGrp_group1 struct {
-	field1 int64
-	field2 string
+	field1 int64  // 字段名1
+	field2 string // 字段名2
 }
 
 func (g *TBTest_rowGrp_group1) GetField1() int64 {
@@ -24,8 +24,8 @@ func (g *TBTest_rowGrp_group1) GetField2() string {
 
 // TBTest_rowIdx_idx1 表 "TBTest" 索引 "idx1"（由行扁平字段组装的视图，JSON 中无此嵌套）。
 type TBTest_rowIdx_idx1 struct {
-	field3 float64
-	field4 int
+	field3 float64 // 字段名3
+	field4 int     // 字段名4
 }
 
 func (g *TBTest_rowIdx_idx1) GetField3() float64 {
@@ -39,34 +39,34 @@ func (g *TBTest_rowIdx_idx1) GetField4() int {
 // TBTestRow 对应表 "TBTest" 的一行（JSON 扁平；@Type「分组/索引」用于行视图与 Table 查询）。
 type TBTestRow struct {
 	id      int64
-	field1  int64
-	field2  string
-	field3  float64
-	field4  int
-	field5  []int64
-	field6  []string
-	field7  []float64
-	field8  []int
-	field9  EnumTest
-	field10 []EnumTest
-	field11 StructTest
-	field12 []StructTest
+	field1  int64        // 字段名1
+	field2  string       // 字段名2
+	field3  float64      // 字段名3
+	field4  int          // 字段名4
+	field5  []int64      // 字段名5
+	field6  []string     // 字段名6
+	field7  []float64    // 字段名7
+	field8  []int        // 字段名8
+	field9  EnumTest     // 字段名9
+	field10 []EnumTest   // 字段名10
+	field11 StructTest   // 字段名11
+	field12 []StructTest // 字段名12
 }
 
 type rowJSONAux_TBTest struct {
 	ID      int64        `json:"id"`
-	Field1  int64        `json:"Field1"`
-	Field2  string       `json:"Field2"`
-	Field3  float64      `json:"Field3"`
-	Field4  int          `json:"Field4"`
-	Field5  []int64      `json:"Field5"`
-	Field6  []string     `json:"Field6"`
-	Field7  []float64    `json:"Field7"`
-	Field8  []int        `json:"Field8"`
-	Field9  EnumTest     `json:"Field9"`
-	Field10 []EnumTest   `json:"Field10"`
-	Field11 StructTest   `json:"Field11"`
-	Field12 []StructTest `json:"Field12"`
+	Field1  int64        `json:"Field1"`  // 字段名1
+	Field2  string       `json:"Field2"`  // 字段名2
+	Field3  float64      `json:"Field3"`  // 字段名3
+	Field4  int          `json:"Field4"`  // 字段名4
+	Field5  []int64      `json:"Field5"`  // 字段名5
+	Field6  []string     `json:"Field6"`  // 字段名6
+	Field7  []float64    `json:"Field7"`  // 字段名7
+	Field8  []int        `json:"Field8"`  // 字段名8
+	Field9  EnumTest     `json:"Field9"`  // 字段名9
+	Field10 []EnumTest   `json:"Field10"` // 字段名10
+	Field11 StructTest   `json:"Field11"` // 字段名11
+	Field12 []StructTest `json:"Field12"` // 字段名12
 }
 
 func (r *TBTestRow) UnmarshalJSON(data []byte) error {
@@ -159,16 +159,16 @@ func (r *TBTestRow) ViewAsIndex() TBTest_rowIdx_idx1 {
 // TBTest_group1 构造 @Type 分组 "group1" 的 map 键（形参与组内字段顺序、类型一致）。
 func TBTest_group1(field1 int64, field2 string) TBTest_rowGrp_group1 {
 	return TBTest_rowGrp_group1{
-		field1: field1,
-		field2: field2,
+		field1: field1, // 字段名1
+		field2: field2, // 字段名2
 	}
 }
 
 // TBTest_idx1 构造 @Type 索引 "idx1" 的 map 键（形参与组内字段顺序、类型一致）。
 func TBTest_idx1(field3 float64, field4 int) TBTest_rowIdx_idx1 {
 	return TBTest_rowIdx_idx1{
-		field3: field3,
-		field4: field4,
+		field3: field3, // 字段名3
+		field4: field4, // 字段名4
 	}
 }
 

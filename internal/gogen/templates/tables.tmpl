@@ -18,7 +18,7 @@ import (
 // {{.TypeName}} 表 {{printf "%q" .TableName}} {{if .IsIndex}}索引{{else}}分组{{end}} {{printf "%q" .GroupKey}}（由行扁平字段组装的视图，JSON 中无此嵌套）。
 type {{.TypeName}} struct {
 {{- range .Fields}}
-	{{.Priv}} {{.GoType}}
+	{{.Priv}} {{.GoType}}{{if .NameCN}} // {{.NameCN}}{{end}}
 {{- end}}
 }
 {{- range .Fields}}{{if .UseSliceGetter}}
@@ -38,7 +38,7 @@ func (g *{{$.TypeName}}) {{.Getter}}() {{.GoType}} {
 func {{.CtorName}}({{.ParamList}}) {{.GroupType}} {
 	return {{.GroupType}}{
 {{- range .CtorFields}}
-		{{.Priv}}: {{.Param}},
+		{{.Priv}}: {{.Param}},{{if .NameCN}} // {{.NameCN}}{{end}}
 {{- end}}
 	}
 }
@@ -59,16 +59,16 @@ func {{.FuncName}}(r *{{.TableName}}Row) string {
 {{define "table_row"}}{{with .}}
 // {{.TableName}}Row 对应表 {{printf "%q" .TableName}} 的一行（JSON 扁平；@Type「分组/索引」用于行视图与 Table 查询）。
 type {{.TableName}}Row struct {
-	id {{.IDGoType}}
+	id {{.IDGoType}}{{if .IDNameCN}} // {{.IDNameCN}}{{end}}
 {{- range .Fields}}
-	{{.Priv}} {{.GoType}}
+	{{.Priv}} {{.GoType}}{{if .NameCN}} // {{.NameCN}}{{end}}
 {{- end}}
 }
 
 type {{.AuxName}} struct {
-	ID {{.IDGoType}} `json:"{{.IDJSONKey}}"`
+	ID {{.IDGoType}} `json:"{{.IDJSONKey}}"`{{if .IDNameCN}} // {{.IDNameCN}}{{end}}
 {{- range .Fields}}
-	{{.Exported}} {{.GoType}} `json:"{{.JSONName}}"`
+	{{.Exported}} {{.GoType}} `json:"{{.JSONName}}"`{{if .NameCN}} // {{.NameCN}}{{end}}
 {{- end}}
 }
 
@@ -167,7 +167,7 @@ func (r *{{.TableName}}Table) deserialize(path string) ([]*{{.TableName}}Row, er
 		}
 {{- end}}
 {{- range .Fields}}
-		{
+		{ {{- if .NameCN}} // {{.NameCN}}{{end}}
 {{- range .BinReadLines}}
 {{.}}
 {{- end}}
@@ -276,7 +276,7 @@ func (r *{{.TableName}}Table) deserialize(path string) ([]*{{.TableName}}Row, er
 		}
 {{- end}}
 {{- range .Fields}}
-		{
+		{ {{- if .NameCN}} // {{.NameCN}}{{end}}
 {{- range .BinReadLines}}
 {{.}}
 {{- end}}

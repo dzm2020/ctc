@@ -20,6 +20,7 @@ type csharpEnumMemberTmpl struct {
 	ConstName string
 	Value     int
 	Last      bool
+	NameCN    string
 }
 
 type csharpEnumTmpl struct {
@@ -51,6 +52,7 @@ func buildCSharpEnumsFileData(ns string, schema *excelconv.Schema) csharpEnumsFi
 				ConstName: csharpPublicName(m.Name),
 				Value:     v,
 				Last:      i == len(members)-1,
+				NameCN:    excelconv.SanitizeOneLineComment(m.NameCN),
 			})
 		}
 		enums = append(enums, csharpEnumTmpl{Name: csharpPublicName(en), Members: ms})
@@ -64,6 +66,7 @@ type csharpStructFieldLineTmpl struct {
 	JsonName string
 	CsType   string
 	Prop     string
+	NameCN   string
 }
 
 type csharpStructOneTmpl struct {
@@ -93,6 +96,7 @@ func buildCSharpStructsFileData(ns string, schema *excelconv.Schema, exportTags 
 				JsonName: sf.Name,
 				CsType:   csharpTypeStruct(sf, schema),
 				Prop:     csharpSafeProp(sf.Name),
+				NameCN:   excelconv.SanitizeOneLineComment(sf.NameCN),
 			})
 		}
 		one := csharpStructOneTmpl{Name: csharpPublicName(sn), Fields: fields}
@@ -152,17 +156,20 @@ type csharpCsprojTmpl struct {
 type csharpParamTmpl struct {
 	CsType string
 	Prop   string
+	NameCN string
 }
 
 type csharpRecordDefTmpl struct {
-	Name   string
-	Fields []csharpParamTmpl
+	Name           string
+	Fields         []csharpParamTmpl
+	RecordComment  string // 分组/索引 record 各字段中文描述合并为一行
 }
 
 type csharpRowFieldTmpl struct {
 	JsonName string
 	CsType   string
 	Prop     string
+	NameCN   string
 }
 
 type csharpViewAsTmpl struct {
@@ -211,6 +218,7 @@ type csharpTableFileTmpl struct {
 	ComparableIndexRecords []csharpRecordDefTmpl
 
 	RowName, TableCls, PkType, PkProp, IDJsonKey string
+	PkNameCN                                   string
 	RowFields                                  []csharpRowFieldTmpl
 	ViewAsGroups, ViewAsIndexes                []csharpViewAsTmpl
 	Binary                                     bool
@@ -249,6 +257,12 @@ func buildCSharpTableFileData(ns, tableName string, schema *excelconv.Schema, ex
 		Binary:     binary,
 		LoadBinary: binary,
 	}
+	for _, fld := range schema.Tables[tableName] {
+		if strings.EqualFold(fld.Name, excelconv.RowJSONIDKey) {
+			data.PkNameCN = excelconv.SanitizeOneLineComment(fld.NameCN)
+			break
+		}
+	}
 
 	for _, g := range groups {
 		gf := excelconv.FieldsInGroup(visible, g)
@@ -257,10 +271,17 @@ func buildCSharpTableFileData(ns, tableName string, schema *excelconv.Schema, ex
 		}
 		rt := tableGroupRecordName(tableName, g)
 		var fields []csharpParamTmpl
+		var cnParts []string
 		for _, f := range gf {
-			fields = append(fields, csharpParamTmpl{CsType: csharpTypeTable(f, schema), Prop: csharpSafeProp(f.Name)})
+			cn := excelconv.SanitizeOneLineComment(f.NameCN)
+			if cn != "" {
+				cnParts = append(cnParts, cn)
+			}
+			fields = append(fields, csharpParamTmpl{CsType: csharpTypeTable(f, schema), Prop: csharpSafeProp(f.Name), NameCN: cn})
 		}
-		data.ComparableGroupRecords = append(data.ComparableGroupRecords, csharpRecordDefTmpl{Name: rt, Fields: fields})
+		data.ComparableGroupRecords = append(data.ComparableGroupRecords, csharpRecordDefTmpl{
+			Name: rt, Fields: fields, RecordComment: strings.Join(cnParts, "；"),
+		})
 	}
 	for _, ix := range indexes {
 		gf := excelconv.FieldsInIndex(visible, ix)
@@ -269,10 +290,17 @@ func buildCSharpTableFileData(ns, tableName string, schema *excelconv.Schema, ex
 		}
 		rt := tableIndexRecordName(tableName, ix)
 		var fields []csharpParamTmpl
+		var cnParts []string
 		for _, f := range gf {
-			fields = append(fields, csharpParamTmpl{CsType: csharpTypeTable(f, schema), Prop: csharpSafeProp(f.Name)})
+			cn := excelconv.SanitizeOneLineComment(f.NameCN)
+			if cn != "" {
+				cnParts = append(cnParts, cn)
+			}
+			fields = append(fields, csharpParamTmpl{CsType: csharpTypeTable(f, schema), Prop: csharpSafeProp(f.Name), NameCN: cn})
 		}
-		data.ComparableIndexRecords = append(data.ComparableIndexRecords, csharpRecordDefTmpl{Name: rt, Fields: fields})
+		data.ComparableIndexRecords = append(data.ComparableIndexRecords, csharpRecordDefTmpl{
+			Name: rt, Fields: fields, RecordComment: strings.Join(cnParts, "；"),
+		})
 	}
 
 	for _, f := range visible {
@@ -280,6 +308,7 @@ func buildCSharpTableFileData(ns, tableName string, schema *excelconv.Schema, ex
 			JsonName: f.Name,
 			CsType:   csharpTypeTable(f, schema),
 			Prop:     csharpSafeProp(f.Name),
+			NameCN:   excelconv.SanitizeOneLineComment(f.NameCN),
 		})
 	}
 

@@ -85,7 +85,7 @@ func renderEnumsFile(pkg string, schema *excelconv.Schema) (string, error) {
 				ParentEnum: en,
 				ConstName:  constName(en, m.Name),
 				Value:      v,
-				Comment:    m.NameCN,
+				Comment:    excelconv.SanitizeOneLineComment(m.NameCN),
 				MemberName: m.Name,
 			})
 		}
@@ -106,8 +106,9 @@ type structFileHeaderTmpl struct {
 
 type structFieldTmpl struct {
 	Priv, GoType, JSONName, Exported, Getter string
-	UseSliceGetter                           bool
-	BinReadLines                             []string // 仅表行字段：tablebin 解码语句块
+	NameCN                                 string // @Type「中文描述」，单行；空则不生注释
+	UseSliceGetter                         bool
+	BinReadLines                           []string // 仅表行字段：tablebin 解码语句块
 }
 
 type configStructTmpl struct {
@@ -142,6 +143,7 @@ func renderStructsFile(pkg string, snames []string, schema *excelconv.Schema, ex
 				Exported:       exportedGoIdent(sf.Name),
 				Getter:         getterMethodName(sf.Name),
 				UseSliceGetter: len(got) >= 2 && got[:2] == "[]",
+				NameCN:         excelconv.SanitizeOneLineComment(sf.NameCN),
 			})
 		}
 		if err := t.ExecuteTemplate(&buf, "config_struct", configStructTmpl{
@@ -176,12 +178,17 @@ type nestedGroupTmpl struct {
 	Fields    []structFieldTmpl
 }
 
+type ctorFieldLineTmpl struct {
+	Priv, Param string
+	NameCN      string
+}
+
 type groupValueCtorTmpl struct {
 	CtorName   string
 	GroupKey   string
 	GroupType  string
 	ParamList  string
-	CtorFields []struct{ Priv, Param string }
+	CtorFields []ctorFieldLineTmpl
 	ForIndex   bool
 }
 
@@ -203,6 +210,7 @@ type tableRowTmpl struct {
 	TableName     string
 	IDGoType      string
 	IDJSONKey     string
+	IDNameCN      string // 主键列在 @Type 中的中文描述（可见字段不含 id，单独填）
 	AuxName       string
 	Fields        []structFieldTmpl
 	ViewAsGroups  []viewAsGroupData
@@ -279,6 +287,7 @@ func fieldToStructFieldTmpl(f excelconv.Field, schema *excelconv.Schema) structF
 		Exported:       exportedGoIdent(f.Name),
 		Getter:         getterMethodName(f.Name),
 		UseSliceGetter: len(got) >= 2 && got[:2] == "[]",
+		NameCN:         excelconv.SanitizeOneLineComment(f.NameCN),
 	}
 }
 

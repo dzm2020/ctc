@@ -2,6 +2,7 @@ package gogen
 
 import (
 	"bytes"
+	"strings"
 	"text/template"
 
 	"ctc/internal/excelconv"
@@ -151,10 +152,19 @@ func appendTableDefinitions(buf *bytes.Buffer, tpl *template.Template, tname str
 		viewIdx = append(viewIdx, viewAsGroupData{Method: mth, GroupType: iTyp, Assignments: asgn})
 	}
 
+	idNameCN := ""
+	for _, fld := range schema.Tables[tname] {
+		if strings.EqualFold(fld.Name, excelconv.RowJSONIDKey) {
+			idNameCN = excelconv.SanitizeOneLineComment(fld.NameCN)
+			break
+		}
+	}
+
 	if err := tpl.ExecuteTemplate(buf, "table_row", tableRowTmpl{
 		TableName:     tname,
 		IDGoType:      idGo,
 		IDJSONKey:     excelconv.RowJSONIDKey,
+		IDNameCN:      idNameCN,
 		AuxName:       rowJSONAuxTypeName(tname),
 		Fields:        fields,
 		ViewAsGroups:  viewAs,
@@ -170,11 +180,7 @@ func appendTableDefinitions(buf *bytes.Buffer, tpl *template.Template, tname str
 		comp := groupFieldsComparable(gf, schema)
 		if comp {
 			pl, _ := buildGroupParamAndArgLists(gf, schema)
-			var cf []struct{ Priv, Param string }
-			for _, fld := range gf {
-				p := privateFieldIdent(fld.Name)
-				cf = append(cf, struct{ Priv, Param string }{Priv: p, Param: p})
-			}
+			cf := ctorFieldsFromGroupFields(gf)
 			if err := tpl.ExecuteTemplate(buf, "group_value_ctor", groupValueCtorTmpl{
 				CtorName:   groupValueCtorName(tname, g),
 				GroupKey:   g,
@@ -209,11 +215,7 @@ func appendTableDefinitions(buf *bytes.Buffer, tpl *template.Template, tname str
 		comp := groupFieldsComparable(gf, schema)
 		if comp {
 			pl, _ := buildGroupParamAndArgLists(gf, schema)
-			var cf []struct{ Priv, Param string }
-			for _, fld := range gf {
-				p := privateFieldIdent(fld.Name)
-				cf = append(cf, struct{ Priv, Param string }{Priv: p, Param: p})
-			}
+			cf := ctorFieldsFromGroupFields(gf)
 			if err := tpl.ExecuteTemplate(buf, "group_value_ctor", groupValueCtorTmpl{
 				CtorName:   groupValueCtorName(tname, ix),
 				GroupKey:   ix,
@@ -367,4 +369,17 @@ func appendTableDefinitions(buf *bytes.Buffer, tpl *template.Template, tname str
 		}
 	}
 	return nil
+}
+
+func ctorFieldsFromGroupFields(gf []excelconv.Field) []ctorFieldLineTmpl {
+	cf := make([]ctorFieldLineTmpl, 0, len(gf))
+	for _, fld := range gf {
+		p := privateFieldIdent(fld.Name)
+		cf = append(cf, ctorFieldLineTmpl{
+			Priv:   p,
+			Param:  p,
+			NameCN: excelconv.SanitizeOneLineComment(fld.NameCN),
+		})
+	}
+	return cf
 }

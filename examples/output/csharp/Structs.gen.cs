@@ -6,7 +6,9 @@ namespace GameData;
 
 public partial class StructTest
 {
+	// ID
 	[JsonPropertyName("ID")] public int ID { get; set; } = default!;
+	// 数量
 	[JsonPropertyName("Num")] public int Num { get; set; } = default!;
 }
 

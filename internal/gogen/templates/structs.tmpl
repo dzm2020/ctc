@@ -13,13 +13,13 @@ import (
 // {{.StructName}} 由策划表 @Type 生成。
 type {{.StructName}} struct {
 {{- range .Fields}}
-	{{.Priv}} {{.GoType}}
+	{{.Priv}} {{.GoType}}{{if .NameCN}} // {{.NameCN}}{{end}}
 {{- end}}
 }
 
 type {{.AuxName}} struct {
 {{- range .Fields}}
-	{{.Exported}} {{.GoType}} `json:"{{.JSONName}}"`
+	{{.Exported}} {{.GoType}} `json:"{{.JSONName}}"`{{if .NameCN}} // {{.NameCN}}{{end}}
 {{- end}}
 }
 

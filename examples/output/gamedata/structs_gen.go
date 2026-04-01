@@ -8,13 +8,13 @@ import (
 
 // StructTest 由策划表 @Type 生成。
 type StructTest struct {
-	iD  int
-	num int
+	iD  int // ID
+	num int // 数量
 }
 
 type structJSONAux_StructTest struct {
-	ID  int `json:"ID"`
-	Num int `json:"Num"`
+	ID  int `json:"ID"`  // ID
+	Num int `json:"Num"` // 数量
 }
 
 func (s *StructTest) UnmarshalJSON(data []byte) error {

@@ -11,7 +11,7 @@ type {{.Name}} int32
 
 const (
 {{- range .Members}}
-	{{.ConstName}} {{.ParentEnum}} = {{.Value}} // {{.Comment}}
+	{{.ConstName}} {{.ParentEnum}} = {{.Value}}{{if .Comment}} // {{.Comment}}{{end}}
 {{- end}}
 )
 

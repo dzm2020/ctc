@@ -5,6 +5,9 @@ namespace {{.Namespace}};
 {{range .Enums}}public enum {{.Name}}
 {
 {{- range .Members}}
+{{- if .NameCN}}
+	// {{.NameCN}}
+{{- end}}
 	{{.ConstName}} = {{.Value}}{{if not .Last}},{{end}}
 {{- end}}
 }

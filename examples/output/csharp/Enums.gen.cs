@@ -4,8 +4,11 @@ namespace GameData;
 
 public enum EnumTest
 {
+	// 枚举1
 	Enum1 = 1,
+	// 枚举2
 	Enum2 = 2,
+	// 枚举3
 	Enum3 = 3
 }
 

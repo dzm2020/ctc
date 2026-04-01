@@ -7,26 +7,42 @@ using System.Text.Json.Serialization;
 
 namespace GameData;
 
+
+// 字段名1；字段名2
 public readonly record struct TBTestRowGrp_group1(long Field1, string Field2);
 
 
+
+// 字段名3；字段名4
 public readonly record struct TBTestRowIdx_idx1(double Field3, int Field4);
 
 
 public partial class TBTestRow
 {
 	[JsonPropertyName("id")] public long Id { get; set; }
+	// 字段名1
 	[JsonPropertyName("Field1")] public long Field1 { get; set; } = default!;
+	// 字段名2
 	[JsonPropertyName("Field2")] public string Field2 { get; set; } = default!;
+	// 字段名3
 	[JsonPropertyName("Field3")] public double Field3 { get; set; } = default!;
+	// 字段名4
 	[JsonPropertyName("Field4")] public int Field4 { get; set; } = default!;
+	// 字段名5
 	[JsonPropertyName("Field5")] public long[] Field5 { get; set; } = default!;
+	// 字段名6
 	[JsonPropertyName("Field6")] public string[] Field6 { get; set; } = default!;
+	// 字段名7
 	[JsonPropertyName("Field7")] public double[] Field7 { get; set; } = default!;
+	// 字段名8
 	[JsonPropertyName("Field8")] public int[] Field8 { get; set; } = default!;
+	// 字段名9
 	[JsonPropertyName("Field9")] public EnumTest Field9 { get; set; } = default!;
+	// 字段名10
 	[JsonPropertyName("Field10")] public EnumTest[] Field10 { get; set; } = default!;
+	// 字段名11
 	[JsonPropertyName("Field11")] public StructTest Field11 { get; set; } = default!;
+	// 字段名12
 	[JsonPropertyName("Field12")] public StructTest[] Field12 { get; set; } = default!;
 
 	public TBTestRowGrp_group1 ViewAsGroup1() => new TBTestRowGrp_group1(Field1, Field2);

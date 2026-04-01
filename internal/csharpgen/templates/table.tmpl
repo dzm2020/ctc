@@ -7,16 +7,30 @@ using System.Text.Json.Serialization;
 
 namespace {{.Namespace}};
 
-{{range .ComparableGroupRecords}}public readonly record struct {{.Name}}({{range $i, $p := .Fields}}{{if $i}}, {{end}}{{$p.CsType}} {{$p.Prop}}{{end}});
+{{range .ComparableGroupRecords}}
+{{- if .RecordComment}}
+// {{.RecordComment}}
+{{- end}}
+public readonly record struct {{.Name}}({{range $i, $p := .Fields}}{{if $i}}, {{end}}{{$p.CsType}} {{$p.Prop}}{{end}});
 
 {{end}}
-{{range .ComparableIndexRecords}}public readonly record struct {{.Name}}({{range $i, $p := .Fields}}{{if $i}}, {{end}}{{$p.CsType}} {{$p.Prop}}{{end}});
+{{range .ComparableIndexRecords}}
+{{- if .RecordComment}}
+// {{.RecordComment}}
+{{- end}}
+public readonly record struct {{.Name}}({{range $i, $p := .Fields}}{{if $i}}, {{end}}{{$p.CsType}} {{$p.Prop}}{{end}});
 
 {{end}}
 public partial class {{.RowName}}
 {
+{{- if .PkNameCN}}
+	// {{.PkNameCN}}
+{{- end}}
 	[JsonPropertyName("{{.IDJsonKey}}")] public {{.PkType}} {{.PkProp}} { get; set; }
 {{- range .RowFields}}
+{{- if .NameCN}}
+	// {{.NameCN}}
+{{- end}}
 	[JsonPropertyName("{{.JsonName}}")] public {{.CsType}} {{.Prop}} { get; set; } = default!;
 {{- end}}
 {{- range .ViewAsGroups}}
