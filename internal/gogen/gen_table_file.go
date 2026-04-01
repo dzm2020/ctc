@@ -119,7 +119,7 @@ func appendTableDefinitions(buf *bytes.Buffer, tpl *template.Template, tname str
 	for _, fld := range visible {
 		sf := fieldToStructFieldTmpl(fld, schema)
 		if binaryData {
-			sf.BinReadLines = binLoadAssignLines(fld, schema, "row", sf.Priv, sf.GoType)
+			sf.BinReadLines = binLoadAssignLines(fld, schema, exportTags, "row", sf.Priv, sf.GoType)
 		}
 		fields = append(fields, sf)
 	}
@@ -269,12 +269,12 @@ func appendTableDefinitions(buf *bytes.Buffer, tpl *template.Template, tname str
 				rkc = rowGroupKeyStrFuncName(tname, g) + "(row)"
 			}
 			slots = append(slots, tableGroupSlotTmpl{
-				MapSuffix:   suff,
-				GroupName:   g,
-				GroupType:   gtyp,
-				Comparable:  comp,
-				VarName:     indexVarName(i),
-				RowKeyCall:  rkc,
+				MapSuffix:  suff,
+				GroupName:  g,
+				GroupType:  gtyp,
+				Comparable: comp,
+				VarName:    indexVarName(i),
+				RowKeyCall: rkc,
 			})
 			mn := "GetRowsByGroup_" + suff
 			if ng == 1 {

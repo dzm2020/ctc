@@ -106,8 +106,8 @@ type structFileHeaderTmpl struct {
 
 type structFieldTmpl struct {
 	Priv, GoType, JSONName, Exported, Getter string
-	UseSliceGetter                         bool
-	BinReadLines                           []string // 仅表行字段：tablebin 解码语句块
+	UseSliceGetter                           bool
+	BinReadLines                             []string // 仅表行字段：tablebin 解码语句块
 }
 
 type configStructTmpl struct {
@@ -136,12 +136,12 @@ func renderStructsFile(pkg string, snames []string, schema *excelconv.Schema, ex
 			priv := privateFieldIdent(sf.Name)
 			got := goFieldTypeStruct(sf, schema)
 			fields = append(fields, structFieldTmpl{
-				Priv:            priv,
-				GoType:          got,
-				JSONName:        sf.Name,
-				Exported:        exportedGoIdent(sf.Name),
-				Getter:          getterMethodName(sf.Name),
-				UseSliceGetter:  len(got) >= 2 && got[:2] == "[]",
+				Priv:           priv,
+				GoType:         got,
+				JSONName:       sf.Name,
+				Exported:       exportedGoIdent(sf.Name),
+				Getter:         getterMethodName(sf.Name),
+				UseSliceGetter: len(got) >= 2 && got[:2] == "[]",
 			})
 		}
 		if err := t.ExecuteTemplate(&buf, "config_struct", configStructTmpl{
@@ -217,12 +217,12 @@ type tableContainerNoGroupTmpl struct {
 }
 
 type tableGroupSlotTmpl struct {
-	MapSuffix   string
-	GroupName   string
-	GroupType   string
-	Comparable  bool
-	VarName     string
-	RowKeyCall  string
+	MapSuffix  string
+	GroupName  string
+	GroupType  string
+	Comparable bool
+	VarName    string
+	RowKeyCall string
 }
 
 type getRowsMethodTmpl struct {
@@ -238,12 +238,12 @@ type getRowsMethodTmpl struct {
 }
 
 type tableIndexSlotTmpl struct {
-	MapSuffix   string
-	IndexName   string
-	IndexType   string
-	Comparable  bool
-	VarName     string
-	RowKeyCall  string
+	MapSuffix  string
+	IndexName  string
+	IndexType  string
+	Comparable bool
+	VarName    string
+	RowKeyCall string
 }
 
 type getByIndexMethodTmpl struct {

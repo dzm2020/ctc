@@ -135,6 +135,18 @@ func (d *Decoder) readUvarintLocal() (uint64, error) {
 	return v, nil
 }
 
+// ReadSliceLen 读取与其它 *Slice 方法一致的 uvarint 元素个数（带上限）。
+func (d *Decoder) ReadSliceLen() (int, error) {
+	n, err := d.readUvarintLocal()
+	if err != nil {
+		return 0, err
+	}
+	if n > maxSliceLen {
+		return 0, errCorrupt
+	}
+	return int(n), nil
+}
+
 // ReadIntSlice zigzag 子元素。
 func (d *Decoder) ReadIntSlice() ([]int, error) {
 	n, err := d.readUvarintLocal()

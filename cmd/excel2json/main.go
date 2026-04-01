@@ -98,7 +98,11 @@ func main() {
 		rows := mergedTables[name]
 		arr := excelconv.TableRowsToOrderedSlice(rows)
 		if cfg.BinaryExport {
-			idKind, cols := excelconv.BuildTableBinSpec(schemaMerged, name, exportTags)
+			idKind, cols, err := excelconv.BuildTableBinSpec(schemaMerged, name, exportTags)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "表 %s 二进制列描述: %v\n", name, err)
+				os.Exit(1)
+			}
 			binPath := filepath.Join(jsonOut, name+".bin")
 			if err := tablebin.EncodeFile(binPath, excelconv.RowJSONIDKey, idKind, cols, arr); err != nil {
 				fmt.Fprintf(os.Stderr, "写入 %s.bin: %v\n", name, err)

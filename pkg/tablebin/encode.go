@@ -7,13 +7,14 @@ import (
 	"math"
 	"os"
 	"strconv"
+	"strings"
 )
 
 const (
 	magic0 = 'T'
 	magic1 = 'B'
 	magic2 = 'B'
-	ver    = byte(1)
+	ver    = byte(2)
 )
 
 const maxSliceLen = 10_000_000
@@ -68,14 +69,26 @@ func buildStringPool(idKey string, idKind IDKind, cols []Column, rows []map[stri
 		for _, c := range cols {
 			switch c.Kind {
 			case KindString:
-				add(asString(row[c.Key]))
+				add(asString(cellValue(row, c)))
 			case KindSliceString:
-				for _, s := range asStringSlice(row[c.Key]) {
+				for _, s := range asStringSlice(cellValue(row, c)) {
 					add(s)
 				}
-			case KindStructJSON, KindSliceStructJSON:
-				for _, blob := range jsonBlobsForCell(row[c.Key], c.Kind) {
-					add(blob)
+			case KindSliceStruct:
+				arr, _ := asSlice(cellValue(row, c))
+				for _, el := range arr {
+					em, _ := el.(map[string]interface{})
+					for _, ef := range c.SliceElem {
+						sv := valueAtPath(em, ef.SubPath)
+						switch ef.Kind {
+						case KindString:
+							add(asString(sv))
+						case KindSliceString:
+							for _, s := range asStringSlice(sv) {
+								add(s)
+							}
+						}
+					}
 				}
 			}
 		}
@@ -83,32 +96,31 @@ func buildStringPool(idKey string, idKind IDKind, cols []Column, rows []map[stri
 	return pool
 }
 
-func jsonBlobsForCell(v interface{}, k ColumnKind) []string {
-	if k == KindStructJSON {
-		if v == nil {
-			return []string{"null"}
-		}
-		b, err := json.Marshal(v)
-		if err != nil {
-			return []string{"null"}
-		}
-		return []string{string(b)}
+func cellValue(row map[string]interface{}, c Column) interface{} {
+	return valueAtPath(row[c.Key], c.SubPath)
+}
+
+func valueAtPath(root interface{}, path string) interface{} {
+	path = strings.TrimSpace(path)
+	if path == "" {
+		return root
 	}
-	// KindSliceStructJSON
-	arr, ok := asSlice(v)
-	if !ok || len(arr) == 0 {
-		return nil
-	}
-	out := make([]string, 0, len(arr))
-	for _, el := range arr {
-		b, err := json.Marshal(el)
-		if err != nil {
-			out = append(out, "null")
+	cur := root
+	for _, p := range strings.Split(path, ".") {
+		p = strings.TrimSpace(p)
+		if p == "" {
 			continue
 		}
-		out = append(out, string(b))
+		if cur == nil {
+			return nil
+		}
+		m, ok := cur.(map[string]interface{})
+		if !ok {
+			return nil
+		}
+		cur = m[p]
 	}
-	return out
+	return cur
 }
 
 func appendRow(dst []byte, idKey string, idKind IDKind, cols []Column, row map[string]interface{}, pool map[string]uint32) ([]byte, error) {
@@ -118,7 +130,7 @@ func appendRow(dst []byte, idKey string, idKind IDKind, cols []Column, row map[s
 		return dst, err
 	}
 	for _, c := range cols {
-		dst, err = appendCell(dst, c, row[c.Key], pool)
+		dst, err = appendCell(dst, c, row, pool)
 		if err != nil {
 			return dst, fmt.Errorf("column %q: %w", c.Key, err)
 		}
@@ -146,8 +158,40 @@ func appendID(dst []byte, v interface{}, idKind IDKind, pool map[string]uint32) 
 	}
 }
 
-func appendCell(dst []byte, c Column, v interface{}, pool map[string]uint32) ([]byte, error) {
-	switch c.Kind {
+func appendCell(dst []byte, c Column, row map[string]interface{}, pool map[string]uint32) ([]byte, error) {
+	if c.Kind == KindSliceStruct {
+		return appendSliceStructCell(dst, c, row, pool)
+	}
+	v := cellValue(row, c)
+	return appendValueOfKind(dst, c.Kind, v, pool)
+}
+
+func appendSliceStructCell(dst []byte, c Column, row map[string]interface{}, pool map[string]uint32) ([]byte, error) {
+	v := cellValue(row, c)
+	arr, ok := asSlice(v)
+	if !ok {
+		arr = nil
+	}
+	if len(arr) > maxSliceLen {
+		return dst, fmt.Errorf("slice too long")
+	}
+	dst = appendUvarint(dst, uint64(len(arr)))
+	for _, el := range arr {
+		em, _ := el.(map[string]interface{})
+		for _, ef := range c.SliceElem {
+			sv := valueAtPath(em, ef.SubPath)
+			var err error
+			dst, err = appendValueOfKind(dst, ef.Kind, sv, pool)
+			if err != nil {
+				return dst, err
+			}
+		}
+	}
+	return dst, nil
+}
+
+func appendValueOfKind(dst []byte, k ColumnKind, v interface{}, pool map[string]uint32) ([]byte, error) {
+	switch k {
 	case KindInt:
 		i, err := asInt64(v)
 		if err != nil {
@@ -241,26 +285,10 @@ func appendCell(dst []byte, c Column, v interface{}, pool map[string]uint32) ([]
 			dst = appendZigzag64(dst, x)
 		}
 		return dst, nil
-	case KindStructJSON:
-		blob := jsonBlobsForCell(v, KindStructJSON)
-		s := "null"
-		if len(blob) > 0 {
-			s = blob[0]
-		}
-		dst = appendUvarint(dst, uint64(pool[s]))
-		return dst, nil
-	case KindSliceStructJSON:
-		blobs := jsonBlobsForCell(v, KindSliceStructJSON)
-		if len(blobs) > maxSliceLen {
-			return dst, fmt.Errorf("slice too long")
-		}
-		dst = appendUvarint(dst, uint64(len(blobs)))
-		for _, s := range blobs {
-			dst = appendUvarint(dst, uint64(pool[s]))
-		}
-		return dst, nil
+	case KindSliceStruct:
+		return dst, fmt.Errorf("KindSliceStruct must be encoded at column level, not nested in SliceElem")
 	default:
-		return dst, fmt.Errorf("unknown column kind %d", c.Kind)
+		return dst, fmt.Errorf("unknown column kind %d", k)
 	}
 }
 

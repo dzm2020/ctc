@@ -100,13 +100,14 @@ func goGroupKeyPartExpr(fld excelconv.Field, schema *excelconv.Schema, rowVar st
 			if got == "[]string" {
 				return fmt.Sprintf("strings.Join(%s, \",\")", path), false, false
 			}
-			return fmt.Sprintf("fmt.Sprint(%s)", path), false, true
+			// 切片（含 []结构体）：json.Marshal 保证与索引键、导出 JSON 一致且稳定
+			return fmt.Sprintf("(func() string { b, _ := json.Marshal(%s); return string(b) })()", path), false, false
 		}
 		if schema != nil && schema.Enums[fld.Type] != nil {
 			return fmt.Sprintf("strconv.FormatInt(int64(%s), 10)", path), true, false
 		}
 		if schema != nil && schema.Structs[fld.Type] != nil {
-			return fmt.Sprintf("fmt.Sprint(%s)", path), false, true
+			return fmt.Sprintf("(func() string { b, _ := json.Marshal(%s); return string(b) })()", path), false, false
 		}
 		return path, false, false
 	}
@@ -128,4 +129,3 @@ func groupFieldsComparable(fields []excelconv.Field, schema *excelconv.Schema) b
 	}
 	return true
 }
-

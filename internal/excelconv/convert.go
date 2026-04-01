@@ -1,14 +1,12 @@
 package excelconv
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/xuri/excelize/v2"
 )
-
 
 // ConvertWorkbook 将工作簿中除 @Type 外、且在 Schema 中有表定义的 sheet 转为 map[表名][主键]行数据。
 func ConvertWorkbook(f *excelize.File, schema *Schema, exportTags []string) (map[string]map[string]map[string]interface{}, error) {
@@ -177,7 +175,18 @@ func cellValue(fld Field, raw string, schema *Schema) (interface{}, error) {
 }
 
 func zeroForField(fld Field, schema *Schema) interface{} {
+	if fld.ArraySplit != "" {
+		switch fld.Type {
+		case "string":
+			return []string{}
+		default:
+			// int / int64 / float64 / 枚举 / 自定义结构：JSON 均序列化为数组
+			return []interface{}{}
+		}
+	}
 	switch fld.Type {
+	case "string":
+		return ""
 	case "int":
 		return 0
 	case "int64":
@@ -187,6 +196,9 @@ func zeroForField(fld Field, schema *Schema) interface{} {
 	default:
 		if schema != nil && schema.Enums[fld.Type] != nil {
 			return 0
+		}
+		if schema != nil && schema.Structs[fld.Type] != nil {
+			return map[string]interface{}{}
 		}
 		return ""
 	}
@@ -235,12 +247,8 @@ func parseScalar(typeName, raw string, schema *Schema) (interface{}, error) {
 			}
 			return nil, fmt.Errorf("枚举 %s 无成员 %q", typeName, raw)
 		}
-		if ms, ok := schema.Structs[typeName]; ok && len(ms) > 0 && strings.HasPrefix(strings.TrimSpace(raw), "{") {
-			var nested map[string]interface{}
-			if err := json.Unmarshal([]byte(raw), &nested); err != nil {
-				return nil, fmt.Errorf("结构 %s JSON: %w", typeName, err)
-			}
-			return nested, nil
+		if _, ok := schema.Structs[typeName]; ok {
+			return parseStructCell(typeName, raw, schema)
 		}
 		return raw, nil
 	}

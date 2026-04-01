@@ -26,32 +26,32 @@ type Field struct {
 
 // EnumMember 枚举成员。
 type EnumMember struct {
-	Enum    string
-	NameCN  string
-	Name    string
-	Type    string
-	Value   string
-	Filter  FieldFilter
+	Enum   string
+	NameCN string
+	Name   string
+	Type   string
+	Value  string
+	Filter FieldFilter
 }
 
 // StructField 结构体字段（「结构」行）。
 type StructField struct {
-	Struct  string
-	NameCN  string
-	Name    string
-	Type    string
+	Struct     string
+	NameCN     string
+	Name       string
+	Type       string
 	ArraySplit string
-	Default string
-	Filter  FieldFilter
+	Default    string
+	Filter     FieldFilter
 }
 
 // Schema 从 @Type 解析得到的全部定义。
 type Schema struct {
-	Tables      map[string][]Field            // table -> ordered fields
-	Enums       map[string][]EnumMember       // enum -> members
-	Structs     map[string][]StructField      // structName -> fields
-	EnumValue   map[string]map[string]int     // enumName -> memberName -> int value
-	TableIDType map[string]string             // 表名 -> 主键类型：int64 | int | string（@Type「主键」行）
+	Tables      map[string][]Field        // table -> ordered fields
+	Enums       map[string][]EnumMember   // enum -> members
+	Structs     map[string][]StructField  // structName -> fields
+	EnumValue   map[string]map[string]int // enumName -> memberName -> int value
+	TableIDType map[string]string         // 表名 -> 主键类型：int64 | int | string（@Type「主键」行）
 }
 
 func NewSchema() *Schema {
@@ -82,4 +82,3 @@ func (s *Schema) registerEnumValue(enum, member string, v int) {
 	}
 	s.EnumValue[enum][member] = v
 }
-

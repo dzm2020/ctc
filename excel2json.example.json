@@ -11,5 +11,5 @@
 	"prettyJson": true,
 	"goPackage": "gamedata",
 	"skipGo": false,
-	"binaryExport": true
+	"binaryExport": false
 }

@@ -1,6 +1,12 @@
 [
   {
     "Cover": "UI\\BGs\\Wallpaper_001.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10002,
+        "Num": 60
+      }
+    ],
     "Time1": 1,
     "Time2": 0,
     "Time3": 0,
@@ -12,6 +18,12 @@
   },
   {
     "Cover": "UI\\BGs\\LoginBG.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10002,
+        "Num": 60
+      }
+    ],
     "Time1": 1,
     "Time2": 0,
     "Time3": 0,
@@ -23,6 +35,12 @@
   },
   {
     "Cover": "UI\\BGs\\201_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10002,
+        "Num": 60
+      }
+    ],
     "Time1": 1,
     "Time2": 0,
     "Time3": 0,
@@ -34,6 +52,12 @@
   },
   {
     "Cover": "UI\\BGs\\202_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10002,
+        "Num": 60
+      }
+    ],
     "Time1": 1,
     "Time2": 0,
     "Time3": 0,
@@ -45,6 +69,12 @@
   },
   {
     "Cover": "UI\\BGs\\203_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10002,
+        "Num": 300
+      }
+    ],
     "Time1": 1,
     "Time2": 0,
     "Time3": 0,
@@ -56,6 +86,12 @@
   },
   {
     "Cover": "UI\\BGs\\204_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10000013,
+        "Num": 680
+      }
+    ],
     "Time1": 1,
     "Time2": 0,
     "Time3": 0,
@@ -67,6 +103,12 @@
   },
   {
     "Cover": "UI\\BGs\\205_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10000013,
+        "Num": 980
+      }
+    ],
     "Time1": 1,
     "Time2": 0,
     "Time3": 0,
@@ -78,6 +120,12 @@
   },
   {
     "Cover": "UI\\BGs\\206_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10000013,
+        "Num": 1280
+      }
+    ],
     "Time1": 1,
     "Time2": 0,
     "Time3": 0,
@@ -89,6 +137,12 @@
   },
   {
     "Cover": "UI\\BGs\\207_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10000013,
+        "Num": 1980
+      }
+    ],
     "Time1": 1,
     "Time2": 0,
     "Time3": 0,
@@ -100,6 +154,12 @@
   },
   {
     "Cover": "UI\\BGs\\208_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10000013,
+        "Num": 3280
+      }
+    ],
     "Time1": 1,
     "Time2": 0,
     "Time3": 0,
@@ -111,6 +171,12 @@
   },
   {
     "Cover": "UI\\BGs\\209_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10000013,
+        "Num": 6480
+      }
+    ],
     "Time1": 1,
     "Time2": 0,
     "Time3": 0,
@@ -122,6 +188,12 @@
   },
   {
     "Cover": "UI\\BGs\\210_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10000013,
+        "Num": 60
+      }
+    ],
     "Time1": 1,
     "Time2": 0,
     "Time3": 0,
@@ -133,6 +205,12 @@
   },
   {
     "Cover": "UI\\BGs\\211_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10000013,
+        "Num": 300
+      }
+    ],
     "Time1": 1,
     "Time2": 0,
     "Time3": 0,
@@ -144,6 +222,12 @@
   },
   {
     "Cover": "UI\\BGs\\212_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10000013,
+        "Num": 680
+      }
+    ],
     "Time1": 1,
     "Time2": 0,
     "Time3": 0,
@@ -155,6 +239,12 @@
   },
   {
     "Cover": "UI\\BGs\\301_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10000013,
+        "Num": 980
+      }
+    ],
     "Time1": 1,
     "Time2": 0,
     "Time3": 0,
@@ -166,6 +256,12 @@
   },
   {
     "Cover": "UI\\BGs\\302_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10000013,
+        "Num": 1280
+      }
+    ],
     "Time1": 1,
     "Time2": 0,
     "Time3": 0,
@@ -177,6 +273,12 @@
   },
   {
     "Cover": "UI\\BGs\\303_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10000013,
+        "Num": 1980
+      }
+    ],
     "Time1": 1,
     "Time2": 0,
     "Time3": 0,
@@ -188,6 +290,12 @@
   },
   {
     "Cover": "UI\\BGs\\304_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10000013,
+        "Num": 3280
+      }
+    ],
     "Time1": 1,
     "Time2": 0,
     "Time3": 0,
@@ -199,6 +307,12 @@
   },
   {
     "Cover": "UI\\BGs\\305_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10000013,
+        "Num": 6480
+      }
+    ],
     "Time1": 1,
     "Time2": 0,
     "Time3": 0,
@@ -210,6 +324,9 @@
   },
   {
     "Cover": "UI\\BGs\\306_show.jpeg",
+    "ShowRewardList": [
+      []
+    ],
     "Time1": 1,
     "Time2": 0,
     "Time3": 0,
@@ -221,6 +338,9 @@
   },
   {
     "Cover": "UI\\BGs\\401_show.jpeg",
+    "ShowRewardList": [
+      []
+    ],
     "Time1": 1,
     "Time2": 0,
     "Time3": 0,
@@ -232,6 +352,9 @@
   },
   {
     "Cover": "UI\\BGs\\402_show.jpeg",
+    "ShowRewardList": [
+      []
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -243,6 +366,9 @@
   },
   {
     "Cover": "UI\\BGs\\403_show.jpeg",
+    "ShowRewardList": [
+      []
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -254,6 +380,9 @@
   },
   {
     "Cover": "UI\\BGs\\404_show.jpeg",
+    "ShowRewardList": [
+      []
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -265,6 +394,9 @@
   },
   {
     "Cover": "UI\\BGs\\405_show.jpeg",
+    "ShowRewardList": [
+      []
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -276,6 +408,9 @@
   },
   {
     "Cover": "UI\\BGs\\406_show.jpeg",
+    "ShowRewardList": [
+      []
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -287,6 +422,9 @@
   },
   {
     "Cover": "UI\\BGs\\407_show.jpeg",
+    "ShowRewardList": [
+      []
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -298,6 +436,9 @@
   },
   {
     "Cover": "UI\\BGs\\408_show.jpeg",
+    "ShowRewardList": [
+      []
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -309,6 +450,9 @@
   },
   {
     "Cover": "UI\\BGs\\409_show.jpeg",
+    "ShowRewardList": [
+      []
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -320,6 +464,9 @@
   },
   {
     "Cover": "UI\\BGs\\410_show.jpeg",
+    "ShowRewardList": [
+      []
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -331,6 +478,9 @@
   },
   {
     "Cover": "UI\\BGs\\411_show.jpeg",
+    "ShowRewardList": [
+      []
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -342,6 +492,9 @@
   },
   {
     "Cover": "UI\\BGs\\412_show.jpeg",
+    "ShowRewardList": [
+      []
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -353,6 +506,9 @@
   },
   {
     "Cover": "UI\\BGs\\413_show.jpeg",
+    "ShowRewardList": [
+      []
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -364,6 +520,28 @@
   },
   {
     "Cover": "UI\\BGs\\414_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 1006002,
+        "Num": 1
+      },
+      {
+        "ID": 1006006,
+        "Num": 1
+      },
+      {
+        "ID": 1006010,
+        "Num": 1
+      },
+      {
+        "ID": 31000301,
+        "Num": 1
+      },
+      {
+        "ID": 10000003,
+        "Num": 1
+      }
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -375,6 +553,9 @@
   },
   {
     "Cover": "UI\\BGs\\415_show.jpeg",
+    "ShowRewardList": [
+      []
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -386,6 +567,9 @@
   },
   {
     "Cover": "UI\\BGs\\416_show.jpeg",
+    "ShowRewardList": [
+      []
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -397,6 +581,20 @@
   },
   {
     "Cover": "UI\\BGs\\417_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10001,
+        "Num": 10
+      },
+      {
+        "ID": 200001,
+        "Num": 2
+      },
+      {
+        "ID": 210002,
+        "Num": 1
+      }
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -408,6 +606,9 @@
   },
   {
     "Cover": "UI\\BGs\\418_show.jpeg",
+    "ShowRewardList": [
+      []
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -419,6 +620,12 @@
   },
   {
     "Cover": "UI\\BGs\\419_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10002,
+        "Num": 100
+      }
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -430,6 +637,20 @@
   },
   {
     "Cover": "UI\\BGs\\420_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10001,
+        "Num": 0
+      },
+      {
+        "ID": 200001,
+        "Num": 0
+      },
+      {
+        "ID": 210002,
+        "Num": 0
+      }
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -441,6 +662,12 @@
   },
   {
     "Cover": "UI\\BGs\\421_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10002,
+        "Num": 10
+      }
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -452,6 +679,12 @@
   },
   {
     "Cover": "UI\\BGs\\422_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10002,
+        "Num": 50
+      }
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -463,6 +696,12 @@
   },
   {
     "Cover": "UI\\BGs\\423_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10002,
+        "Num": 100
+      }
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -474,6 +713,9 @@
   },
   {
     "Cover": "UI\\BGs\\424_show.jpeg",
+    "ShowRewardList": [
+      []
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -485,6 +727,9 @@
   },
   {
     "Cover": "UI\\BGs\\425_show.jpeg",
+    "ShowRewardList": [
+      []
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -496,6 +741,9 @@
   },
   {
     "Cover": "UI\\BGs\\426_show.jpeg",
+    "ShowRewardList": [
+      []
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -507,6 +755,12 @@
   },
   {
     "Cover": "UI\\BGs\\427_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10002,
+        "Num": 200
+      }
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -518,6 +772,12 @@
   },
   {
     "Cover": "UI\\BGs\\428_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10002,
+        "Num": 300
+      }
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,
@@ -529,6 +789,12 @@
   },
   {
     "Cover": "UI\\BGs\\429_show.jpeg",
+    "ShowRewardList": [
+      {
+        "ID": 10002,
+        "Num": 500
+      }
+    ],
     "Time1": 0,
     "Time2": 0,
     "Time3": 0,

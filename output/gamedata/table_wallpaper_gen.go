@@ -3,8 +3,8 @@
 package gamedata
 
 import (
-	"ctc/pkg/tablebin"
 	"encoding/json"
+	"os"
 	"slices"
 )
 
@@ -189,80 +189,12 @@ type WallpaperTable struct {
 }
 
 func (r *WallpaperTable) load(path string) error {
-	dec, err := tablebin.Open(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
-	n := dec.NumRows()
-	r.list = make([]*WallpaperRow, 0, n)
-	for i := uint64(0); i < n; i++ {
-		row := &WallpaperRow{}
-		row.id, err = dec.ReadInt64Zigzag()
-		if err != nil {
-			return err
-		}
-		{
-			row.cover, err = dec.ReadString()
-			if err != nil {
-				return err
-			}
-		}
-		{
-			row.video1, err = dec.ReadString()
-			if err != nil {
-				return err
-			}
-		}
-		{
-			row.time1, err = dec.ReadInt()
-			if err != nil {
-				return err
-			}
-		}
-		{
-			row.video2, err = dec.ReadString()
-			if err != nil {
-				return err
-			}
-		}
-		{
-			row.time2, err = dec.ReadInt()
-			if err != nil {
-				return err
-			}
-		}
-		{
-			row.typeField, err = dec.ReadInt()
-			if err != nil {
-				return err
-			}
-		}
-		{
-			row.video3, err = dec.ReadString()
-			if err != nil {
-				return err
-			}
-		}
-		{
-			row.time3, err = dec.ReadInt()
-			if err != nil {
-				return err
-			}
-		}
-		{
-			var _bss []string
-			_bss, err = dec.ReadStringSlice()
-			if err != nil {
-				return err
-			}
-			row.showRewardList = make([]ItemConfig, len(_bss))
-			for _i := range _bss {
-				if err := json.Unmarshal([]byte(_bss[_i]), &row.showRewardList[_i]); err != nil {
-					return err
-				}
-			}
-		}
-		r.list = append(r.list, row)
+	if err := json.Unmarshal(data, &r.list); err != nil {
+		return err
 	}
 	r.dict = make(map[int64]*WallpaperRow)
 	for _, row := range r.list {

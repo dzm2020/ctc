@@ -37,11 +37,19 @@ func valueToIndexKeyPart(v interface{}, fld Field, schema *Schema) (string, erro
 		case []interface{}:
 			ss := make([]string, 0, len(x))
 			for _, e := range x {
-				ss = append(ss, fmt.Sprint(e))
+				s, err := jsonScalarOrObjectForIndex(e)
+				if err != nil {
+					return "", err
+				}
+				ss = append(ss, s)
 			}
 			return strings.Join(ss, ","), nil
 		default:
-			return fmt.Sprint(x), nil
+			b, err := json.Marshal(x)
+			if err != nil {
+				return "", err
+			}
+			return string(b), nil
 		}
 	}
 	switch fld.Type {
@@ -72,7 +80,34 @@ func valueToIndexKeyPart(v interface{}, fld Field, schema *Schema) (string, erro
 			}
 			return strconv.FormatInt(i, 10), nil
 		}
+		if schema != nil && schema.Structs[fld.Type] != nil {
+			b, err := json.Marshal(v)
+			if err != nil {
+				return "", err
+			}
+			return string(b), nil
+		}
 		return fmt.Sprint(v), nil
+	}
+}
+
+// jsonScalarOrObjectForIndex 将数组元素稳定序列化（结构体 map 用 json.Marshal，避免 fmt.Sprint(map) 键序随机）。
+func jsonScalarOrObjectForIndex(e interface{}) (string, error) {
+	switch x := e.(type) {
+	case map[string]interface{}:
+		b, err := json.Marshal(x)
+		if err != nil {
+			return "", err
+		}
+		return string(b), nil
+	case string:
+		return x, nil
+	default:
+		b, err := json.Marshal(x)
+		if err != nil {
+			return "", err
+		}
+		return string(b), nil
 	}
 }
 

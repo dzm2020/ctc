@@ -65,6 +65,39 @@ func TestEncodeDecodeRoundtrip(t *testing.T) {
 	}
 }
 
+func TestBinStructFlattenRoundtrip(t *testing.T) {
+	dir := t.TempDir()
+	p := filepath.Join(dir, "s.bin")
+	cols := []Column{
+		{Key: "Item", SubPath: "ID", Kind: KindInt},
+		{Key: "Item", SubPath: "Num", Kind: KindInt},
+	}
+	rows := []map[string]interface{}{
+		{"id": int64(1), "Item": map[string]interface{}{"ID": 10002, "Num": 60}},
+	}
+	if err := EncodeFile(p, "id", IDInt64, cols, rows); err != nil {
+		t.Fatal(err)
+	}
+	dec, err := Open(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := dec.ReadInt64Zigzag(); err != nil {
+		t.Fatal(err)
+	}
+	a, err := dec.ReadInt()
+	if err != nil || a != 10002 {
+		t.Fatalf("ID %v %v", a, err)
+	}
+	b, err := dec.ReadInt()
+	if err != nil || b != 60 {
+		t.Fatalf("Num %v %v", b, err)
+	}
+	if err := dec.ErrIfTrailing(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestStringPoolDedup(t *testing.T) {
 	dir := t.TempDir()
 	p := filepath.Join(dir, "d.bin")

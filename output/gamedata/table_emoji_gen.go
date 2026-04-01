@@ -3,8 +3,8 @@
 package gamedata
 
 import (
-	"ctc/pkg/tablebin"
 	"encoding/json"
+	"os"
 	"slices"
 )
 
@@ -85,61 +85,12 @@ type EmojiTable struct {
 }
 
 func (r *EmojiTable) load(path string) error {
-	dec, err := tablebin.Open(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
-	n := dec.NumRows()
-	r.list = make([]*EmojiRow, 0, n)
-	for i := uint64(0); i < n; i++ {
-		row := &EmojiRow{}
-		row.id, err = dec.ReadInt64Zigzag()
-		if err != nil {
-			return err
-		}
-		{
-			row.name, err = dec.ReadString()
-			if err != nil {
-				return err
-			}
-		}
-		{
-			row.shortName, err = dec.ReadString()
-			if err != nil {
-				return err
-			}
-		}
-		{
-			row.icon, err = dec.ReadString()
-			if err != nil {
-				return err
-			}
-		}
-		{
-			row.unlockType, err = dec.ReadInt()
-			if err != nil {
-				return err
-			}
-		}
-		{
-			row.conditionText, err = dec.ReadString()
-			if err != nil {
-				return err
-			}
-		}
-		{
-			row.speed, err = dec.ReadFloat64Slice()
-			if err != nil {
-				return err
-			}
-		}
-		{
-			row.grids, err = dec.ReadInt()
-			if err != nil {
-				return err
-			}
-		}
-		r.list = append(r.list, row)
+	if err := json.Unmarshal(data, &r.list); err != nil {
+		return err
 	}
 	r.dict = make(map[int64]*EmojiRow)
 	for _, row := range r.list {

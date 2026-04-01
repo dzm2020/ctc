@@ -13,6 +13,7 @@ import (
 // WritePackage 根据 Schema 写出可编译的 Go 包：
 //   - enums_gen.go、structs_gen.go
 //   - 每张数据表一个 table_<slug>_gen.go（原 tables_gen.go 已废弃，会尝试删除）
+//
 // loader_gen.go 由 GenerateBundle 单独写出。
 func WritePackage(dir, pkg string, schema *excelconv.Schema, exportTags []string, binaryData bool) error {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -103,14 +104,7 @@ func visibleTableFields(fields []excelconv.Field, exportTags []string) []excelco
 }
 
 func visibleStructFields(fields []excelconv.StructField, exportTags []string) []excelconv.StructField {
-	var v []excelconv.StructField
-	for _, sf := range fields {
-		if !excelconv.FieldVisible(sf.Filter, exportTags) {
-			continue
-		}
-		v = append(v, sf)
-	}
-	return v
+	return excelconv.VisibleStructFields(fields, exportTags)
 }
 
 func tableFieldsNeedSlices(fields []excelconv.Field) bool {

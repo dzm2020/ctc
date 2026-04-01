@@ -23,12 +23,21 @@ const (
 	KindSliceFloat64
 	KindSliceString
 	KindSliceEnumInt32
-	KindStructJSON
-	KindSliceStructJSON
+	// KindSliceStruct 列：SubPath 下为 []map（与 excel 解析一致）；每元素按 SliceElem 顺序写标量/嵌套切片。
+	KindSliceStruct
 )
 
+// SliceElemField 描述 KindSliceStruct 每个数组元素内的字段顺序（SubPath 为元素 map 内点分路径）。
+type SliceElemField struct {
+	SubPath string
+	Kind    ColumnKind
+}
+
 // Column 描述一列在 map 中的 JSON 键名及其线类型。
+// SubPath 非空时，值取自 row[Key] 经点路径进入嵌套 map（与 JSON 对象结构一致）；空表示值即 row[Key]。
 type Column struct {
-	Key  string
-	Kind ColumnKind
+	Key       string
+	Kind      ColumnKind
+	SubPath   string
+	SliceElem []SliceElemField // 仅 KindSliceStruct
 }
