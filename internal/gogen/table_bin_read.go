@@ -13,13 +13,16 @@ import (
 func binLoadAssignLines(f excelconv.Field, schema *excelconv.Schema, exportTags []string, recv, priv, goType string) []string {
 	bt := strings.TrimSpace(f.Type)
 	if f.ArraySplit == "" && schema.Structs[bt] != nil {
-		prefix := recv + "." + priv
-		lines := []string{fmt.Sprintf("\t\t\t%s = &%s{}", prefix, bt)}
-		lines = append(lines, binLoadStructFields(bt, schema, exportTags, prefix, "\t\t\t")...)
-		return lines
+		return []string{
+			fmt.Sprintf("\t\t\tv := &%s{}", bt),
+			"\t\t\tif err = v.deserialize(dec); err != nil {",
+			"\t\t\t\treturn nil, err",
+			"\t\t\t}",
+			fmt.Sprintf("\t\t\t%s.%s = v", recv, priv),
+		}
 	}
 	if f.ArraySplit != "" && schema.Structs[bt] != nil {
-		return binLoadSliceOfStruct(recv+"."+priv, bt, goType, schema, exportTags, "\t\t\t")
+		return binLoadSliceOfStructDeserialize(recv+"."+priv, bt, goType, schema, exportTags, "\t\t\t", true)
 	}
 
 	k := excelconv.TableBinColumnKind(f, schema)
@@ -68,7 +71,7 @@ func binLoadAssignLines(f excelconv.Field, schema *excelconv.Schema, exportTags 
 		}
 	case tablebin.KindSliceStruct:
 		elem := goSliceElemSchemaName(goType)
-		return binLoadSliceOfStruct(recv+"."+priv, elem, goType, schema, exportTags, "\t\t\t")
+		return binLoadSliceOfStructDeserialize(recv+"."+priv, elem, goType, schema, exportTags, "\t\t\t", true)
 	default:
 		return []string{
 			fmt.Sprintf("\t\t\t%s.%s, err = dec.ReadString()\n\t\t\tif err != nil {\n\t\t\t\treturn nil, err\n\t\t\t}", recv, priv),
@@ -82,24 +85,33 @@ func goSliceElemSchemaName(goSliceType string) string {
 	return strings.TrimPrefix(s, "*")
 }
 
-func binLoadSliceOfStruct(assignPrefix, elemTypeName, goSliceType string, schema *excelconv.Schema, exportTags []string, indent string) []string {
-	tab := indent + "\t"
+// binLoadSliceOfStructDeserialize 解码 []*T 或 []T（元素为 @Type 结构体）：每元素调用 deserialize。
+// retNilErr 为 true 时错误分支为 return nil, err（表行反序列化）；false 时为 return err（配置结构体 deserialize 内）。
+func binLoadSliceOfStructDeserialize(assignPrefix, elemTypeName, goSliceType string, schema *excelconv.Schema, exportTags []string, indent string, retNilErr bool) []string {
+	errRet := "return err"
+	if retNilErr {
+		errRet = "return nil, err"
+	}
 	lines := []string{
 		fmt.Sprintf("%svar _nl int", indent),
 		fmt.Sprintf("%s_nl, err = dec.ReadSliceLen()", indent),
 		fmt.Sprintf("%sif err != nil {", indent),
-		fmt.Sprintf("%s\treturn nil, err", indent),
+		fmt.Sprintf("%s\t%s", indent, errRet),
 		fmt.Sprintf("%s}", indent),
 		fmt.Sprintf("%s%s = make(%s, _nl)", indent, assignPrefix, goSliceType),
 		fmt.Sprintf("%sfor _si := 0; _si < _nl; _si++ {", indent),
-		fmt.Sprintf("%s%s[_si] = &%s{}", tab, assignPrefix, elemTypeName),
+		fmt.Sprintf("%s\tv := &%s{}", indent, elemTypeName),
+		fmt.Sprintf("%s\tif err = v.deserialize(dec); err != nil {", indent),
+		fmt.Sprintf("%s\t\t%s", indent, errRet),
+		fmt.Sprintf("%s\t}", indent),
+		fmt.Sprintf("%s\t%s[_si] = v", indent, assignPrefix),
+		fmt.Sprintf("%s}", indent),
 	}
-	lines = append(lines, binLoadStructFields(elemTypeName, schema, exportTags, assignPrefix+"[_si]", tab)...)
-	lines = append(lines, fmt.Sprintf("%s}", indent))
 	return lines
 }
 
-func binLoadStructFields(typeName string, schema *excelconv.Schema, exportTags []string, assignPrefix, indent string) []string {
+// structDeserializeFieldLines 生成 (s *T) deserialize 方法体中的语句（不含方法签名与最后的 return nil）。
+func structDeserializeFieldLines(typeName string, schema *excelconv.Schema, exportTags []string, assignPrefix, indent string) []string {
 	vis := excelconv.VisibleStructFields(schema.Structs[typeName], exportTags)
 	var lines []string
 	for _, sf := range vis {
@@ -109,51 +121,59 @@ func binLoadStructFields(typeName string, schema *excelconv.Schema, exportTags [
 		if sf.ArraySplit != "" {
 			if schema.Structs[bt] != nil {
 				goSl := goFieldTypeStruct(sf, schema)
-				lines = append(lines, binLoadSliceOfStruct(sub, bt, goSl, schema, exportTags, indent)...)
+				lines = append(lines, binLoadSliceOfStructDeserialize(sub, bt, goSl, schema, exportTags, indent, false)...)
 				continue
 			}
-			lines = append(lines, binLoadScalarArrayLines(indent, sub, bt, schema)...)
+			lines = append(lines, binLoadScalarArrayLines(indent, sub, bt, schema, false)...)
 			continue
 		}
 		if schema.Structs[bt] != nil {
 			lines = append(lines, fmt.Sprintf("%s%s = &%s{}", indent, sub, bt))
-			lines = append(lines, binLoadStructFields(bt, schema, exportTags, sub, indent)...)
+			lines = append(lines,
+				fmt.Sprintf("%sif err = %s.deserialize(dec); err != nil {", indent, sub),
+				fmt.Sprintf("%s\treturn err", indent),
+				fmt.Sprintf("%s}", indent),
+			)
 			continue
 		}
-		lines = append(lines, binLoadScalarLeafLines(indent, sub, bt, schema)...)
+		lines = append(lines, binLoadScalarLeafLines(indent, sub, bt, schema, false)...)
 	}
 	return lines
 }
 
-func binLoadScalarLeafLines(indent, assignDest, baseType string, schema *excelconv.Schema) []string {
+func binLoadScalarLeafLines(indent, assignDest, baseType string, schema *excelconv.Schema, retNilPair bool) []string {
+	errRet := "\treturn err"
+	if retNilPair {
+		errRet = "\treturn nil, err"
+	}
 	bt := strings.TrimSpace(baseType)
 	switch bt {
 	case "int":
 		return []string{
 			fmt.Sprintf("%s%s, err = dec.ReadInt()", indent, assignDest),
 			fmt.Sprintf("%sif err != nil {", indent),
-			fmt.Sprintf("%s\treturn nil, err", indent),
+			fmt.Sprintf("%s%s", indent, errRet),
 			fmt.Sprintf("%s}", indent),
 		}
 	case "int64":
 		return []string{
 			fmt.Sprintf("%s%s, err = dec.ReadInt64Zigzag()", indent, assignDest),
 			fmt.Sprintf("%sif err != nil {", indent),
-			fmt.Sprintf("%s\treturn nil, err", indent),
+			fmt.Sprintf("%s%s", indent, errRet),
 			fmt.Sprintf("%s}", indent),
 		}
 	case "float64":
 		return []string{
 			fmt.Sprintf("%s%s, err = dec.ReadFloat64()", indent, assignDest),
 			fmt.Sprintf("%sif err != nil {", indent),
-			fmt.Sprintf("%s\treturn nil, err", indent),
+			fmt.Sprintf("%s%s", indent, errRet),
 			fmt.Sprintf("%s}", indent),
 		}
 	case "string":
 		return []string{
 			fmt.Sprintf("%s%s, err = dec.ReadString()", indent, assignDest),
 			fmt.Sprintf("%sif err != nil {", indent),
-			fmt.Sprintf("%s\treturn nil, err", indent),
+			fmt.Sprintf("%s%s", indent, errRet),
 			fmt.Sprintf("%s}", indent),
 		}
 	default:
@@ -162,7 +182,7 @@ func binLoadScalarLeafLines(indent, assignDest, baseType string, schema *excelco
 				fmt.Sprintf("%svar _e int32", indent),
 				fmt.Sprintf("%s_e, err = dec.ReadInt32Zigzag()", indent),
 				fmt.Sprintf("%sif err != nil {", indent),
-				fmt.Sprintf("%s\treturn nil, err", indent),
+				fmt.Sprintf("%s%s", indent, errRet),
 				fmt.Sprintf("%s}", indent),
 				fmt.Sprintf("%s%s = %s(_e)", indent, assignDest, bt),
 			}
@@ -170,41 +190,45 @@ func binLoadScalarLeafLines(indent, assignDest, baseType string, schema *excelco
 		return []string{
 			fmt.Sprintf("%s%s, err = dec.ReadString()", indent, assignDest),
 			fmt.Sprintf("%sif err != nil {", indent),
-			fmt.Sprintf("%s\treturn nil, err", indent),
+			fmt.Sprintf("%s%s", indent, errRet),
 			fmt.Sprintf("%s}", indent),
 		}
 	}
 }
 
-func binLoadScalarArrayLines(indent, assignDest, elemBase string, schema *excelconv.Schema) []string {
+func binLoadScalarArrayLines(indent, assignDest, elemBase string, schema *excelconv.Schema, retNilPair bool) []string {
+	errRet := "\treturn err"
+	if retNilPair {
+		errRet = "\treturn nil, err"
+	}
 	bt := strings.TrimSpace(elemBase)
 	switch bt {
 	case "int":
 		return []string{
 			fmt.Sprintf("%s%s, err = dec.ReadIntSlice()", indent, assignDest),
 			fmt.Sprintf("%sif err != nil {", indent),
-			fmt.Sprintf("%s\treturn nil, err", indent),
+			fmt.Sprintf("%s%s", indent, errRet),
 			fmt.Sprintf("%s}", indent),
 		}
 	case "int64":
 		return []string{
 			fmt.Sprintf("%s%s, err = dec.ReadInt64Slice()", indent, assignDest),
 			fmt.Sprintf("%sif err != nil {", indent),
-			fmt.Sprintf("%s\treturn nil, err", indent),
+			fmt.Sprintf("%s%s", indent, errRet),
 			fmt.Sprintf("%s}", indent),
 		}
 	case "float64":
 		return []string{
 			fmt.Sprintf("%s%s, err = dec.ReadFloat64Slice()", indent, assignDest),
 			fmt.Sprintf("%sif err != nil {", indent),
-			fmt.Sprintf("%s\treturn nil, err", indent),
+			fmt.Sprintf("%s%s", indent, errRet),
 			fmt.Sprintf("%s}", indent),
 		}
 	case "string":
 		return []string{
 			fmt.Sprintf("%s%s, err = dec.ReadStringSlice()", indent, assignDest),
 			fmt.Sprintf("%sif err != nil {", indent),
-			fmt.Sprintf("%s\treturn nil, err", indent),
+			fmt.Sprintf("%s%s", indent, errRet),
 			fmt.Sprintf("%s}", indent),
 		}
 	default:
@@ -214,7 +238,7 @@ func binLoadScalarArrayLines(indent, assignDest, elemBase string, schema *excelc
 				fmt.Sprintf("%svar _ev []int32", indent),
 				fmt.Sprintf("%s_ev, err = dec.ReadInt32ZigzagSlice()", indent),
 				fmt.Sprintf("%sif err != nil {", indent),
-				fmt.Sprintf("%s\treturn nil, err", indent),
+				fmt.Sprintf("%s%s", indent, errRet),
 				fmt.Sprintf("%s}", indent),
 				fmt.Sprintf("%s%s = make([]%s, len(_ev))", indent, assignDest, en),
 				fmt.Sprintf("%sfor _i := range _ev {", indent),
@@ -225,7 +249,7 @@ func binLoadScalarArrayLines(indent, assignDest, elemBase string, schema *excelc
 		return []string{
 			fmt.Sprintf("%s%s, err = dec.ReadStringSlice()", indent, assignDest),
 			fmt.Sprintf("%sif err != nil {", indent),
-			fmt.Sprintf("%s\treturn nil, err", indent),
+			fmt.Sprintf("%s%s", indent, errRet),
 			fmt.Sprintf("%s}", indent),
 		}
 	}

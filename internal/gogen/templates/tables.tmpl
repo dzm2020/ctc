@@ -3,12 +3,12 @@
 package {{.Pkg}}
 
 import (
-	"encoding/json"{{if .NeedOS}}
+{{if .NeedTableBin}}	"ctc/pkg/tablebin"
+{{end}}	"encoding/json"{{if .NeedOS}}
 	"os"{{end}}{{if .NeedFmt}}
 	"fmt"{{end}}{{if .NeedStrconv}}
 	"strconv"{{end}}{{if .NeedGroupStrings}}
-	"strings"{{end}}{{if .NeedTableBin}}
-	"ctc/pkg/tablebin"{{end}}
+	"strings"{{end}}
 )
 
 {{end}}

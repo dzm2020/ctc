@@ -100,7 +100,8 @@ func renderEnumsFile(pkg string, schema *excelconv.Schema) (string, error) {
 // --- structs ---
 
 type structFileHeaderTmpl struct {
-	Pkg string
+	Pkg          string
+	NeedTableBin bool // binary 导出且存在 @Type 结构体时 import tablebin
 }
 
 type structFieldTmpl struct {
@@ -110,15 +111,20 @@ type structFieldTmpl struct {
 }
 
 type configStructTmpl struct {
-	StructName string
-	AuxName    string
-	Fields     []structFieldTmpl
+	StructName         string
+	AuxName            string
+	Fields             []structFieldTmpl
+	BinaryDeserialize  bool     // binary 导出时为每种 @Type 结构体生成 deserialize（供表行 .bin 加载调用）
+	DeserializeLines   []string // deserialize 方法体（不含 return nil）
 }
 
-func renderStructsFile(pkg string, snames []string, schema *excelconv.Schema, exportTags []string) (string, error) {
+func renderStructsFile(pkg string, snames []string, schema *excelconv.Schema, exportTags []string, binaryData bool) (string, error) {
 	t := codegenRoot()
 	var buf bytes.Buffer
-	if err := t.ExecuteTemplate(&buf, "struct_file_header", structFileHeaderTmpl{Pkg: pkg}); err != nil {
+	if err := t.ExecuteTemplate(&buf, "struct_file_header", structFileHeaderTmpl{
+		Pkg:          pkg,
+		NeedTableBin: binaryData && len(snames) > 0,
+	}); err != nil {
 		return "", err
 	}
 	for _, sn := range snames {
@@ -136,10 +142,16 @@ func renderStructsFile(pkg string, snames []string, schema *excelconv.Schema, ex
 				NameCN:   excelconv.SanitizeOneLineComment(sf.NameCN),
 			})
 		}
+		var deserLines []string
+		if binaryData {
+			deserLines = structDeserializeFieldLines(sn, schema, exportTags, "s", "\t")
+		}
 		if err := t.ExecuteTemplate(&buf, "config_struct", configStructTmpl{
-			StructName: sn,
-			AuxName:    structJSONAuxTypeName(sn),
-			Fields:     fields,
+			StructName:        sn,
+			AuxName:           structJSONAuxTypeName(sn),
+			Fields:            fields,
+			BinaryDeserialize: binaryData,
+			DeserializeLines:  deserLines,
 		}); err != nil {
 			return "", err
 		}

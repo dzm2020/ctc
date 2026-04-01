@@ -46,7 +46,7 @@ func WritePackage(dir, pkg string, schema *excelconv.Schema, exportTags []string
 	}
 	sort.Strings(snames)
 	if len(snames) > 0 {
-		src, err := renderStructsFile(pkg, snames, schema, exportTags)
+		src, err := renderStructsFile(pkg, snames, schema, exportTags, binaryData)
 		if err != nil {
 			return fmt.Errorf("structs template: %w", err)
 		}

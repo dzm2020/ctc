@@ -3,8 +3,8 @@
 package gamedata
 
 import (
+	"ctc/pkg/tablebin"
 	"encoding/json"
-	"os"
 )
 
 // TBTest_rowGrp_group1 表 "TBTest" 分组 "group1"（由行扁平字段组装的视图，JSON 中无此嵌套）。
@@ -193,13 +193,108 @@ func (r *TBTestTable) load(path string) error {
 }
 
 func (r *TBTestTable) deserialize(path string) ([]*TBTestRow, error) {
-	data, err := os.ReadFile(path)
+	dec, err := tablebin.Open(path)
 	if err != nil {
 		return nil, err
 	}
-	var list []*TBTestRow
-	if err := json.Unmarshal(data, &list); err != nil {
-		return nil, err
+	n := dec.NumRows()
+	list := make([]*TBTestRow, 0, n)
+	for i := uint64(0); i < n; i++ {
+		row := &TBTestRow{}
+		row.id, err = dec.ReadInt64Zigzag()
+		if err != nil {
+			return nil, err
+		}
+		{ // 字段名1
+			row.field1, err = dec.ReadInt64Zigzag()
+			if err != nil {
+				return nil, err
+			}
+		}
+		{ // 字段名2
+			row.field2, err = dec.ReadString()
+			if err != nil {
+				return nil, err
+			}
+		}
+		{ // 字段名3
+			row.field3, err = dec.ReadFloat64()
+			if err != nil {
+				return nil, err
+			}
+		}
+		{ // 字段名4
+			row.field4, err = dec.ReadInt()
+			if err != nil {
+				return nil, err
+			}
+		}
+		{ // 字段名5
+			row.field5, err = dec.ReadInt64Slice()
+			if err != nil {
+				return nil, err
+			}
+		}
+		{ // 字段名6
+			row.field6, err = dec.ReadStringSlice()
+			if err != nil {
+				return nil, err
+			}
+		}
+		{ // 字段名7
+			row.field7, err = dec.ReadFloat64Slice()
+			if err != nil {
+				return nil, err
+			}
+		}
+		{ // 字段名8
+			row.field8, err = dec.ReadIntSlice()
+			if err != nil {
+				return nil, err
+			}
+		}
+		{ // 字段名9
+			var _e int32
+			_e, err = dec.ReadInt32Zigzag()
+			if err != nil {
+				return nil, err
+			}
+			row.field9 = EnumTest(_e)
+		}
+		{ // 字段名10
+			var _ev []int32
+			_ev, err = dec.ReadInt32ZigzagSlice()
+			if err != nil {
+				return nil, err
+			}
+			row.field10 = make([]EnumTest, len(_ev))
+			for _i := range _ev {
+				row.field10[_i] = EnumTest(_ev[_i])
+			}
+		}
+		{ // 字段名11
+			v := &StructTest{}
+			if err = v.deserialize(dec); err != nil {
+				return nil, err
+			}
+			row.field11 = v
+		}
+		{ // 字段名12
+			var _nl int
+			_nl, err = dec.ReadSliceLen()
+			if err != nil {
+				return nil, err
+			}
+			row.field12 = make([]*StructTest, _nl)
+			for _si := 0; _si < _nl; _si++ {
+				v := &StructTest{}
+				if err = v.deserialize(dec); err != nil {
+					return nil, err
+				}
+				row.field12[_si] = v
+			}
+		}
+		list = append(list, row)
 	}
 	return list, nil
 }

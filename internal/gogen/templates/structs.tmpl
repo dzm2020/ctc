@@ -3,7 +3,8 @@
 package {{.Pkg}}
 
 import (
-	"encoding/json"
+{{if .NeedTableBin}}	"ctc/pkg/tablebin"
+{{end}}	"encoding/json"
 )
 
 {{end}}
@@ -32,6 +33,15 @@ func (s *{{.StructName}}) UnmarshalJSON(data []byte) error {
 {{- end}}
 	return nil
 }
+{{- if .BinaryDeserialize}}
+
+func (s *{{.StructName}}) deserialize(dec *tablebin.Decoder) (err error) {
+{{- range .DeserializeLines}}
+{{.}}
+{{- end}}
+	return nil
+}
+{{- end}}
 {{- range .Fields}}
 
 func (s *{{$.StructName}}) {{.Getter}}() {{.GoType}} {

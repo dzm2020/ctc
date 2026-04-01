@@ -13,5 +13,5 @@
 	"csharpNamespace": "GameData",
 	"skipGo": false,
 	"skipCSharp": false,
-	"binaryExport": false
+	"binaryExport": true
 }

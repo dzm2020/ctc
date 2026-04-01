@@ -4,7 +4,7 @@ using System.IO;
 
 namespace GameData;
 
-/// <summary>汇总各表；与 excel2json 的 jsonPath 目录及 binaryExport 生成的 .json 一致。</summary>
+/// <summary>汇总各表；与 excel2json 的 jsonPath 目录及 binaryExport 生成的 .bin 一致。</summary>
 public sealed class GameData
 {
 	public TBTestTable TBTest { get; } = new();
@@ -12,7 +12,7 @@ public sealed class GameData
 	public static GameData Load(string dataDir)
 	{
 		var g = new GameData();
-		g.TBTest.Load(Path.Combine(dataDir, "TBTest.json"));
+		g.TBTest.Load(Path.Combine(dataDir, "TBTest.bin"));
 		return g;
 	}
 }

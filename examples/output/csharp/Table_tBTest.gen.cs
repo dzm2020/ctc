@@ -48,6 +48,35 @@ public partial class TBTestRow
 	public TBTestRowGrp_group1 ViewAsGroup1() => new TBTestRowGrp_group1(Field1, Field2);
 
 	public TBTestRowIdx_idx1 ViewAsIndex() => new TBTestRowIdx_idx1(Field3, Field4);
+
+	internal void ReadFrom(TableBinDecoder dec)
+	{
+		Id = dec.ReadInt64Zigzag();
+		this.Field1 = dec.ReadInt64Zigzag();
+		this.Field2 = dec.ReadString();
+		this.Field3 = dec.ReadFloat64();
+		this.Field4 = dec.ReadInt();
+		this.Field5 = dec.ReadInt64Slice();
+		this.Field6 = dec.ReadStringSlice();
+		this.Field7 = dec.ReadFloat64Slice();
+		this.Field8 = dec.ReadIntSlice();
+		this.Field9 = (EnumTest)dec.ReadInt32Zigzag();
+		{
+			var _ev = dec.ReadInt32ZigzagSliceAsIntArray();
+			this.Field10 = new EnumTest[_ev.Length];
+			for (int _i = 0; _i < _ev.Length; _i++) this.Field10[_i] = (EnumTest)_ev[_i];
+		}
+		Field11 = new StructTest();
+		Field11.ReadFrom(dec);
+		{
+			int _nl = dec.ReadSliceLen();
+			Field12 = new StructTest[_nl];
+			for (int _si = 0; _si < _nl; _si++) {
+				Field12[_si] = new StructTest();
+				Field12[_si].ReadFrom(dec);
+			}
+		}
+	}
 }
 
 public partial class TBTestTable
@@ -63,8 +92,13 @@ public partial class TBTestTable
 
 	public void Load(string path)
 	{
-		var json = File.ReadAllText(path);
-		var rows = JsonSerializer.Deserialize<List<TBTestRow>>(json) ?? new List<TBTestRow>();
+		var dec = TableBinDecoder.Open(path);
+		var rows = new List<TBTestRow>();
+		for (ulong i = 0; i < dec.NumRows; i++) {
+			var row = new TBTestRow();
+			row.ReadFrom(dec);
+			rows.Add(row);
+		}
 		LoadFromRows(rows);
 	}
 
