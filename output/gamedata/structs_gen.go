@@ -4,22 +4,21 @@ package gamedata
 
 import (
 	"encoding/json"
-	"slices"
 )
 
-// ItemConfig 由策划表 @Type 生成。
-type ItemConfig struct {
+// StructTest 由策划表 @Type 生成。
+type StructTest struct {
 	iD  int
 	num int
 }
 
-type structJSONAux_ItemConfig struct {
+type structJSONAux_StructTest struct {
 	ID  int `json:"ID"`
 	Num int `json:"Num"`
 }
 
-func (s *ItemConfig) UnmarshalJSON(data []byte) error {
-	var u structJSONAux_ItemConfig
+func (s *StructTest) UnmarshalJSON(data []byte) error {
+	var u structJSONAux_StructTest
 	if err := json.Unmarshal(data, &u); err != nil {
 		return err
 	}
@@ -28,46 +27,10 @@ func (s *ItemConfig) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (s *ItemConfig) GetID() int {
+func (s *StructTest) GetID() int {
 	return s.iD
 }
 
-func (s *ItemConfig) GetNum() int {
+func (s *StructTest) GetNum() int {
 	return s.num
-}
-
-// LevelItemConfig 由策划表 @Type 生成。
-type LevelItemConfig struct {
-	start  int
-	end    int
-	reward []int
-}
-
-type structJSONAux_LevelItemConfig struct {
-	Start  int   `json:"Start"`
-	End    int   `json:"End"`
-	Reward []int `json:"Reward"`
-}
-
-func (s *LevelItemConfig) UnmarshalJSON(data []byte) error {
-	var u structJSONAux_LevelItemConfig
-	if err := json.Unmarshal(data, &u); err != nil {
-		return err
-	}
-	s.start = u.Start
-	s.end = u.End
-	s.reward = u.Reward
-	return nil
-}
-
-func (s *LevelItemConfig) GetStart() int {
-	return s.start
-}
-
-func (s *LevelItemConfig) GetEnd() int {
-	return s.end
-}
-
-func (s *LevelItemConfig) GetReward() []int {
-	return slices.Clone(s.reward)
 }

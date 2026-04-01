@@ -4,30 +4,10 @@ using System.Text.Json.Serialization;
 
 namespace GameData;
 
-public partial class ItemConfig
+public partial class StructTest
 {
 	[JsonPropertyName("ID")] public int ID { get; set; } = default!;
 	[JsonPropertyName("Num")] public int Num { get; set; } = default!;
-
-	internal void ReadFrom(TableBinDecoder dec)
-	{
-		this.ID = dec.ReadInt();
-		this.Num = dec.ReadInt();
-	}
-}
-
-public partial class LevelItemConfig
-{
-	[JsonPropertyName("Start")] public int Start { get; set; } = default!;
-	[JsonPropertyName("End")] public int End { get; set; } = default!;
-	[JsonPropertyName("Reward")] public int[] Reward { get; set; } = default!;
-
-	internal void ReadFrom(TableBinDecoder dec)
-	{
-		this.Start = dec.ReadInt();
-		this.End = dec.ReadInt();
-		this.Reward = dec.ReadIntSlice();
-	}
 }
 
 

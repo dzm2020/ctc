@@ -4,17 +4,15 @@ using System.IO;
 
 namespace GameData;
 
-/// <summary>汇总各表；与 excel2json 的 jsonPath 目录及 binaryExport 生成的 .bin 一致。</summary>
+/// <summary>汇总各表；与 excel2json 的 jsonPath 目录及 binaryExport 生成的 .json 一致。</summary>
 public sealed class GameData
 {
-	public EmojiTable Emoji { get; } = new();
-	public WallpaperTable Wallpaper { get; } = new();
+	public TBTestTable TBTest { get; } = new();
 
 	public static GameData Load(string dataDir)
 	{
 		var g = new GameData();
-		g.Emoji.Load(Path.Combine(dataDir, "Emoji.bin"));
-		g.Wallpaper.Load(Path.Combine(dataDir, "Wallpaper.bin"));
+		g.TBTest.Load(Path.Combine(dataDir, "TBTest.json"));
 		return g;
 	}
 }

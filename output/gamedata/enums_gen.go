@@ -2,31 +2,25 @@
 
 package gamedata
 
-// EquipPartType 由策划表 @Type 生成。
-type EquipPartType int32
+// EnumTest 由策划表 @Type 生成。
+type EnumTest int32
 
 const (
-	EquipPartTypeHeadBand     EquipPartType = 1 // 球鞋
-	EquipPartTypeWristBand    EquipPartType = 2 // 护腿板
-	EquipPartTypeKneepad      EquipPartType = 3 // 护膝
-	EquipPartTypeAnkleSupport EquipPartType = 4 // 护踝
-	EquipPartTypeGlove        EquipPartType = 5 // 手套
+	EnumTestEnum1 EnumTest = 1 // 枚举1
+	EnumTestEnum2 EnumTest = 2 // 枚举2
+	EnumTestEnum3 EnumTest = 3 // 枚举3
 )
 
-// EquipPartType_name 数值 → @Type 成员名。
-var EquipPartType_name = map[int32]string{
-	1: "HeadBand",
-	2: "WristBand",
-	3: "kneepad",
-	4: "AnkleSupport",
-	5: "glove",
+// EnumTest_name 数值 → @Type 成员名。
+var EnumTest_name = map[int32]string{
+	1: "enum1",
+	2: "enum2",
+	3: "enum3",
 }
 
-// EquipPartType_value @Type 成员名 → 数值。
-var EquipPartType_value = map[string]int32{
-	"HeadBand":     1,
-	"WristBand":    2,
-	"kneepad":      3,
-	"AnkleSupport": 4,
-	"glove":        5,
+// EnumTest_value @Type 成员名 → 数值。
+var EnumTest_value = map[string]int32{
+	"enum1": 1,
+	"enum2": 2,
+	"enum3": 3,
 }

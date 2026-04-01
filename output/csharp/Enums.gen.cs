@@ -2,13 +2,11 @@
 #nullable enable
 namespace GameData;
 
-public enum EquipPartType
+public enum EnumTest
 {
-	HeadBand = 1,
-	WristBand = 2,
-	Kneepad = 3,
-	AnkleSupport = 4,
-	Glove = 5
+	Enum1 = 1,
+	Enum2 = 2,
+	Enum3 = 3
 }
 
 
