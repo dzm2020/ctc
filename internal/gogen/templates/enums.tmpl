@@ -7,11 +7,25 @@ package {{.Pkg}}
 
 {{define "enums_body"}}{{range .Enums}}
 // {{.Name}} 由策划表 @Type 生成。
-type {{.Name}} int
+type {{.Name}} int32
 
 const (
 {{- range .Members}}
 	{{.ConstName}} {{.ParentEnum}} = {{.Value}} // {{.Comment}}
 {{- end}}
 )
+
+// {{.Name}}_name 数值 → @Type 成员名。
+var {{.Name}}_name = map[int32]string{
+{{- range .Members}}
+	{{.Value}}: {{printf "%q" .MemberName}},
+{{- end}}
+}
+
+// {{.Name}}_value @Type 成员名 → 数值。
+var {{.Name}}_value = map[string]int32{
+{{- range .Members}}
+	{{printf "%q" .MemberName}}: {{.Value}},
+{{- end}}
+}
 {{end}}{{end}}

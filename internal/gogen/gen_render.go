@@ -49,6 +49,7 @@ type enumMemberTmpl struct {
 	ConstName  string
 	Value      int
 	Comment    string
+	MemberName string // @Type 成员名字段，用于 X_name / X_value 的字符串键
 }
 
 type enumTmpl struct {
@@ -85,6 +86,7 @@ func renderEnumsFile(pkg string, schema *excelconv.Schema) (string, error) {
 				ConstName:  constName(en, m.Name),
 				Value:      v,
 				Comment:    m.NameCN,
+				MemberName: m.Name,
 			})
 		}
 		enums = append(enums, enumTmpl{Name: en, Members: ms})

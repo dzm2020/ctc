@@ -3,7 +3,7 @@
 package gamedata
 
 // EquipPartType 由策划表 @Type 生成。
-type EquipPartType int
+type EquipPartType int32
 
 const (
 	EquipPartTypeHeadBand     EquipPartType = 1 // 球鞋
@@ -12,3 +12,21 @@ const (
 	EquipPartTypeAnkleSupport EquipPartType = 4 // 护踝
 	EquipPartTypeGlove        EquipPartType = 5 // 手套
 )
+
+// EquipPartType_name 数值 → @Type 成员名。
+var EquipPartType_name = map[int32]string{
+	1: "HeadBand",
+	2: "WristBand",
+	3: "kneepad",
+	4: "AnkleSupport",
+	5: "glove",
+}
+
+// EquipPartType_value @Type 成员名 → 数值。
+var EquipPartType_value = map[string]int32{
+	"HeadBand":     1,
+	"WristBand":    2,
+	"kneepad":      3,
+	"AnkleSupport": 4,
+	"glove":        5,
+}
