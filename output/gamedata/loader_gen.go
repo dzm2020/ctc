@@ -9,13 +9,17 @@ import (
 
 // GameData 汇总各表数据；请使用与 excel2json -out 相同的目录调用 LoadGameData。
 type GameData struct {
-	WallpaperTable
+	Emoji     EmojiTable
+	Wallpaper WallpaperTable
 }
 
 // LoadGameData 在 jsonDir 下按 «表名».json 加载全部表（JSON 为行对象数组）。
 func LoadGameData(jsonDir string) (*GameData, error) {
 	d := &GameData{}
-	if err := d.WallpaperTable.load(filepath.Join(jsonDir, "Wallpaper.json")); err != nil {
+	if err := d.Emoji.load(filepath.Join(jsonDir, "Emoji.json")); err != nil {
+		return nil, fmt.Errorf("load Emoji.json: %w", err)
+	}
+	if err := d.Wallpaper.load(filepath.Join(jsonDir, "Wallpaper.json")); err != nil {
 		return nil, fmt.Errorf("load Wallpaper.json: %w", err)
 	}
 	return d, nil

@@ -10,11 +10,10 @@ import (
 	"ctc/internal/excelconv"
 )
 
-// WritePackage 根据 Schema 写出可编译的 Go 包（仍为多个文件，与模板目录一一对应）：
-//   - enums_gen.go（templates/enums.tmpl）
-//   - structs_gen.go（templates/structs.tmpl）
-//   - tables_gen.go（templates/tables.tmpl）
-// loader_gen.go 由 GenerateBundle 单独写出（templates/loader.tmpl）。
+// WritePackage 根据 Schema 写出可编译的 Go 包：
+//   - enums_gen.go、structs_gen.go
+//   - 每张数据表一个 table_<slug>_gen.go（原 tables_gen.go 已废弃，会尝试删除）
+// loader_gen.go 由 GenerateBundle 单独写出。
 func WritePackage(dir, pkg string, schema *excelconv.Schema, exportTags []string) error {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
@@ -55,11 +54,27 @@ func WritePackage(dir, pkg string, schema *excelconv.Schema, exportTags []string
 
 	tkeys := sortedTableKeys(schema.Tables)
 	if len(tkeys) > 0 {
-		src, err := renderTablesFile(pkg, tkeys, schema, exportTags)
-		if err != nil {
-			return fmt.Errorf("tables template: %w", err)
+		_ = os.Remove(filepath.Join(dir, "tables_gen.go"))
+		slugUse := make(map[string]int)
+		for _, tname := range tkeys {
+			slug := privateFieldIdent(tname)
+			if slug == "" {
+				slug = "table"
+			}
+			n := slugUse[slug]
+			slugUse[slug]++
+			var fname string
+			if n == 0 {
+				fname = fmt.Sprintf("table_%s_gen.go", slug)
+			} else {
+				fname = fmt.Sprintf("table_%s_%d_gen.go", slug, n+1)
+			}
+			src, err := renderOneTableGoFile(pkg, tname, schema, exportTags)
+			if err != nil {
+				return fmt.Errorf("table %q (%s): %w", tname, fname, err)
+			}
+			files = append(files, fileOut{fname, src})
 		}
-		files = append(files, fileOut{"tables_gen.go", src})
 	}
 
 	type formatted struct {

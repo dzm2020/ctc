@@ -22,38 +22,50 @@ func groupValueCtorName(tname, groupKey string) string {
 	return tname + "_" + privateFieldIdent(groupKey)
 }
 
-// tableFileGroupColKeyImports 生成 row_group_key_str 拼 string 键时 tables_gen 额外需要的标准库（可比较分组用结构体键，不触发）。
+// tableFileGroupColKeyImports 全表扫描（如 loader 等需汇总 import 时使用）。
 func tableFileGroupColKeyImports(schema *excelconv.Schema, exportTags []string) (needStrconv, needFmt bool) {
 	for _, tname := range sortedTableKeys(schema.Tables) {
-		visible := visibleTableFields(schema.Tables[tname], exportTags)
-		for _, g := range excelconv.DistinctFieldGroups(visible) {
-			gf := excelconv.FieldsInGroup(visible, g)
-			if groupFieldsComparable(gf, schema) {
-				continue
+		s, f := tableFileGroupColKeyImportsForTable(schema, tname, exportTags)
+		if s {
+			needStrconv = true
+		}
+		if f {
+			needFmt = true
+		}
+	}
+	return needStrconv, needFmt
+}
+
+// tableFileGroupColKeyImportsForTable 单表生成文件时计算该行组 string 键所需的 strconv/fmt。
+func tableFileGroupColKeyImportsForTable(schema *excelconv.Schema, tname string, exportTags []string) (needStrconv, needFmt bool) {
+	visible := visibleTableFields(schema.Tables[tname], exportTags)
+	for _, g := range excelconv.DistinctFieldGroups(visible) {
+		gf := excelconv.FieldsInGroup(visible, g)
+		if groupFieldsComparable(gf, schema) {
+			continue
+		}
+		for _, f := range gf {
+			_, impStrconv, impFmt := goGroupKeyPartExpr(f, schema, "r")
+			if impStrconv {
+				needStrconv = true
 			}
-			for _, f := range gf {
-				_, impStrconv, impFmt := goGroupKeyPartExpr(f, schema, "r")
-				if impStrconv {
-					needStrconv = true
-				}
-				if impFmt {
-					needFmt = true
-				}
+			if impFmt {
+				needFmt = true
 			}
 		}
-		for _, ix := range excelconv.DistinctFieldIndexes(visible) {
-			gf := excelconv.FieldsInIndex(visible, ix)
-			if groupFieldsComparable(gf, schema) {
-				continue
+	}
+	for _, ix := range excelconv.DistinctFieldIndexes(visible) {
+		gf := excelconv.FieldsInIndex(visible, ix)
+		if groupFieldsComparable(gf, schema) {
+			continue
+		}
+		for _, f := range gf {
+			_, impStrconv, impFmt := goGroupKeyPartExpr(f, schema, "r")
+			if impStrconv {
+				needStrconv = true
 			}
-			for _, f := range gf {
-				_, impStrconv, impFmt := goGroupKeyPartExpr(f, schema, "r")
-				if impStrconv {
-					needStrconv = true
-				}
-				if impFmt {
-					needFmt = true
-				}
+			if impFmt {
+				needFmt = true
 			}
 		}
 	}
