@@ -147,11 +147,11 @@ public partial class {{.TableCls}}
 
 	public {{.RowName}}? Index(int idx) => (uint)idx < (uint)List.Count ? List[idx] : null;
 
-	public void Range(System.Func<{{.RowName}}, bool> f) {
+	public void ForEach(System.Func<{{.RowName}}, bool> f) {
 		foreach (var kv in Dict) { if (!f(kv.Value)) return; }
 	}
 
-	public void SeqRange(System.Func<{{.RowName}}, bool> f) {
+	public void ForEachOrdered(System.Func<{{.RowName}}, bool> f) {
 		foreach (var row in List) { if (!f(row)) return; }
 	}
 

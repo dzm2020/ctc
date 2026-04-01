@@ -190,7 +190,7 @@ func (r *{{.TableName}}Table) Index(idx int) *{{.TableName}}Row {
 	return r.list[idx]
 }
 
-func (r *{{.TableName}}Table) Range(f func(*{{.TableName}}Row) bool) {
+func (r *{{.TableName}}Table) ForEach(f func(*{{.TableName}}Row) bool) {
 	for _, row := range r.dict {
 		if !f(row) {
 			return
@@ -198,7 +198,7 @@ func (r *{{.TableName}}Table) Range(f func(*{{.TableName}}Row) bool) {
 	}
 }
 
-func (r *{{.TableName}}Table) SeqRange(f func(*{{.TableName}}Row) bool) {
+func (r *{{.TableName}}Table) ForEachOrdered(f func(*{{.TableName}}Row) bool) {
 	for _, row := range r.list {
 		if !f(row) {
 			return
@@ -370,7 +370,7 @@ func (r *{{.TableName}}Table) Index(idx int) *{{.TableName}}Row {
 	return r.list[idx]
 }
 
-func (r *{{.TableName}}Table) Range(f func(*{{.TableName}}Row) bool) {
+func (r *{{.TableName}}Table) ForEach(f func(*{{.TableName}}Row) bool) {
 	for _, row := range r.dict {
 		if !f(row) {
 			return
@@ -378,7 +378,7 @@ func (r *{{.TableName}}Table) Range(f func(*{{.TableName}}Row) bool) {
 	}
 }
 
-func (r *{{.TableName}}Table) SeqRange(f func(*{{.TableName}}Row) bool) {
+func (r *{{.TableName}}Table) ForEachOrdered(f func(*{{.TableName}}Row) bool) {
 	for _, row := range r.list {
 		if !f(row) {
 			return

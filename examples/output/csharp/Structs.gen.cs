@@ -10,12 +10,6 @@ public partial class StructTest
 	[JsonPropertyName("ID")] public int ID { get; set; } = default!;
 	// 数量
 	[JsonPropertyName("Num")] public int Num { get; set; } = default!;
-
-	internal void ReadFrom(TableBinDecoder dec)
-	{
-		this.ID = dec.ReadInt();
-		this.Num = dec.ReadInt();
-	}
 }
 
 

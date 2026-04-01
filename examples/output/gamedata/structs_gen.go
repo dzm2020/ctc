@@ -3,7 +3,6 @@
 package gamedata
 
 import (
-	"ctc/pkg/tablebin"
 	"encoding/json"
 )
 
@@ -25,18 +24,6 @@ func (s *StructTest) UnmarshalJSON(data []byte) error {
 	}
 	s.iD = u.ID
 	s.num = u.Num
-	return nil
-}
-
-func (s *StructTest) deserialize(dec *tablebin.Decoder) (err error) {
-	s.iD, err = dec.ReadInt()
-	if err != nil {
-		return err
-	}
-	s.num, err = dec.ReadInt()
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
